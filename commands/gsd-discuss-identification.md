@@ -1,7 +1,7 @@
 ---
 description: Identification-shaped discussion before planning a phase. Asks methodology-specific gray-area questions (parallel trends for DiD, exclusion restrictions for IV, etc.) and writes CONTEXT.md with locked decisions for the planner.
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, Task
-arguments: phase_number
+arguments: phase_number [--meta-cog]
 ---
 
 # /gsd-discuss-identification
@@ -9,6 +9,10 @@ arguments: phase_number
 You are running the discussion phase for an empirical research project. This replaces `/gsd-discuss-phase` when the phase involves identification choices.
 
 Phase number: $ARGUMENTS
+
+## --meta-cog flag (optional)
+
+If `--meta-cog` is in the arguments, the `identification-checker` agent's verdict is determined by N=3 parallel runs and a consistency check, rather than a single call. See [`docs/meta-cognition.md`](../docs/meta-cognition.md) for the rationale (this implements the disagreement-as-confidence-signal pattern from Yona, Geva, and Matias 2026, arXiv:2605.01428). Cost: roughly 3× tokens at the identification-checker step. Use it for high-stakes identification decisions (a paper you're seriously committed to submitting); skip for exploratory/throwaway specs.
 
 ## Process
 

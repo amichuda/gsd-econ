@@ -1,7 +1,7 @@
 ---
-description: "Final pre-submission audit. Spawns five polish agents in parallel (numbers, cross-refs, bibliography, consistency, claims), aggregates findings, presents triaged options, generates fix plans for accepted findings, applies up to 2 rounds. Auto-invoked by /gsd-submit-paper."
+description: "Final pre-submission audit. Spawns five polish agents in parallel (numbers, cross-refs, citations, consistency, claims), aggregates findings, presents triaged options, generates fix plans for accepted findings, applies up to 2 rounds. Auto-invoked by /gsd-submit-paper."
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, Task
-arguments: "[--round <N>] [--skip <agent_name>]"
+arguments: "[--round <N>] [--skip <agent_name>] [--meta-cog] [--offload-policy manual|assisted|aggressive]"
 ---
 
 # /gsd-polish-pass
@@ -59,6 +59,53 @@ INFO       | polish-claims      | §2.1                  | FCC broadband definit
 ```
 
 Deduplicate where two agents report the same underlying issue (e.g., polish-numbers and polish-consistency both flagging the same percentage drift).
+
+### Step 3.5 — Confidence-rate findings (always runs; calibration depends on `--meta-cog`)
+
+Each finding gets a confidence rating that controls how much human attention it requires.
+
+**`--meta-cog` is optional and default-off.** Without it, confidence ratings come from a single-pass self-assessment (see "Without `--meta-cog`" below). With it, ratings come from N=3 parallel runs at 3× token cost. Choose based on stakes: opt in for high-stakes pre-submission passes; skip for routine checks.
+
+#### Without `--meta-cog` (default — uncalibrated single-pass rating)
+
+Spawn a confidence-rater inline step that reads each finding and rates it `high` / `medium` / `low` based on:
+- Specificity of the location citation (concrete file:line → higher confidence)
+- Strength of the evidence the agent provided (a measured drift with both source values → higher than a vague "this looks inconsistent")
+- Whether the finding is mechanical (cross-ref resolves or doesn't) versus judgmental (a sample restriction is "inconsistent")
+
+Annotate each finding with the rating. **Important:** without `--meta-cog`, these ratings are the model's own self-assessment in a single pass. The Yona, Geva, and Matias (2026, arXiv:2605.01428) paper warns that single-pass self-rated confidence is poorly calibrated. Treat as a heuristic, not a guarantee.
+
+#### With `--meta-cog` (calibrated confidence via repeated sampling)
+
+Replace each polish agent's single invocation with N=3 parallel invocations on the same input. After all complete:
+
+1. For each finding, count how many of the three runs raised it. 3/3 → `high-confidence`; 2/3 → `medium-confidence`; 1/3 → `low-confidence` (singleton — the agent isn't sure this is a real finding).
+2. Findings raised by 2+ runs have their content paraphrased into a single entry in the unified report.
+3. Findings raised by only one run are tagged with the framing "one of three runs flagged this."
+
+This adds 3× cost across all polish agents but produces confidence ratings backed by the disagreement-as-uncertainty signal the paper proposes. See [`docs/meta-cognition.md`](../docs/meta-cognition.md).
+
+The confidence ratings (whether single-pass or meta-cog) feed Step 3.7's offload policy.
+
+### Step 3.7 — Apply offload policy
+
+The `--offload-policy` flag controls which findings reach the user for triage versus auto-handled by the framework. The user's choice trades off speed against the risk of the framework auto-handling something they'd have caught.
+
+- **`manual`** (default — current behavior): every finding goes to user triage in Step 4. The confidence ratings are visible but advisory.
+
+- **`assisted`**:
+  - High-confidence findings → go to user triage (Step 4) with no recommendation
+  - Medium-confidence findings → go to user with a deliberator-suggested action ("the framework recommends address; do you agree?")
+  - Low-confidence findings → auto-acknowledged and logged to STATE.md as "framework flagged this with low confidence; not surfaced for triage." User can review the STATE.md log later if they want.
+
+- **`aggressive`**:
+  - High-confidence findings → auto-addressed (fix plan generated and queued for the user to apply via `/gsd-execute-phase polish`). The user sees the generated plan but doesn't decide whether to address it.
+  - Medium-confidence findings → go to user triage (Step 4)
+  - Low-confidence findings → auto-dismissed with a STATE.md note.
+
+The offload policy is honest about its trade-off: more offload means faster runs but the framework auto-handles findings that might have been wrong. Use `aggressive` only when you trust the calibration — which means you should be running with `--meta-cog` set. **If `--offload-policy aggressive` is set without `--meta-cog`, warn the user**: "you're auto-handling findings based on uncalibrated single-pass confidence; consider adding `--meta-cog` for calibrated confidence at 3× cost." Proceed if the user confirms.
+
+Log the policy decision and what got offloaded to STATE.md so the audit trail captures what the framework decided versus what the user decided.
 
 ### Step 4 — Present to user, triage
 

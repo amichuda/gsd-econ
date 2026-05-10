@@ -178,6 +178,7 @@ gsd-econ/
 │   ├── adapting-gsd.md            # what we override vs reuse
 │   ├── adopting-mid-project.md    # brownfield retrofit guide
 │   ├── model-tiers.md             # reasoning-tier system for agents
+│   ├── meta-cognition.md          # --meta-cog flag and the offload-policy system
 │   ├── verification-flow.md       # how RUT severities map to GSD gates
 │   └── writing-tests.md           # authoring custom RUT tests
 ├── commands/                      # overlay commands (slash-invoked)
@@ -259,6 +260,7 @@ gsd-econ/
 4. **Identification is sacred.** The default GSD `assumptions` mode (codebase-first, ask only to correct) is dangerous for identification choices. We force `discuss` mode for any phase tagged as identification.
 5. **One thing per commit.** A regression spec, a robustness column, a paragraph rewrite, a figure regeneration. Same atomic-commit philosophy GSD uses for software.
 7. **Project rules are explicit and lazy-loaded.** `AGENTS.md` at the project root holds always-on invariants (read-only data, user triages decisions, atomic commits). Cross-cutting rules live in `rules/` — loaded on demand when a session encounters relevant work. This follows the OpenCode/Claude Code convention so the rules apply across runtimes without duplication.
+8. **Calibrated confidence as a control signal.** Optional `--meta-cog` flag on judgment-heavy commands (`/gsd-plan-empirics`, `/gsd-discuss-identification`, `/gsd-referee-sim`, `/gsd-polish-pass`) replaces single-pass agent calls with N=3 parallel runs and uses disagreement-as-uncertainty to rate findings. Composable with `/gsd-polish-pass --offload-policy {manual|assisted|aggressive}` for trading off triage volume against framework auto-handling. Implements the workflow-level version of Yona, Geva, and Matias (2026); see [`docs/meta-cognition.md`](docs/meta-cognition.md).
 
 ---
 

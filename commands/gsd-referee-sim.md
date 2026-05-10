@@ -1,7 +1,7 @@
 ---
 description: "Adversarial peer review. Spawns K parallel referee-sim runs and aggregates the result. Default mode (no --heavy): K heavy-tier referees with varied framings, aggregated by simple cross-tabulation. --heavy mode: K light-tier referees + 1 heavy-tier deliberator that synthesizes their reports. K defaults to 2; the runs span specialist/cross-field/methods-skeptic/etc. framings."
 allowed-tools: Read, Write, Bash, Glob, Grep, Task
-arguments: "[--n-referees K] [--heavy] [--severity major|all] [--journal <target>]"
+arguments: "[--n-referees K] [--heavy] [--meta-cog] [--severity major|all] [--journal <target>]"
 ---
 
 # /gsd-referee-sim
@@ -143,6 +143,20 @@ Spawn the `referee-deliberator` agent (heavy tier). Provide:
 The deliberator produces `.planning/referee-sim/<ISO>/deliberated-report.md`. This replaces the cross-tabulated summary as the primary aggregation artifact.
 
 Optionally, also generate a thin `summary.md` with the per-referee table for quick scanning.
+
+#### `--meta-cog` mode (composes with --heavy)
+
+If `--meta-cog` is in `$ARGUMENTS` and `--heavy` is also set, the deliberator is invoked N=3 times in parallel rather than once. Each independent deliberator reads the same K parallel reports and produces its own synthesis. Then a thin reconciliation step compares the three deliberators' outputs:
+
+1. For each *substantive concern* the deliberators flag, count how many of the three raised it. 3/3 → `high-confidence` substantive concern; 2/3 → `medium-confidence`; 1/3 → `low-confidence` (likely a singleton).
+2. For each *aggregate recommendation* (Reject / Major / Minor / Accept), report the spread across deliberators. If all three agree → high-confidence verdict; if they split → present the spread, don't average.
+3. The final `deliberated-report.md` is annotated with these confidence markers.
+
+This implements the disagreement-as-confidence-signal pattern from Yona, Geva, and Matias (2026, arXiv:2605.01428): when N independent invocations of the same agent agree, intrinsic uncertainty is low; when they disagree, it's high. See [`docs/meta-cognition.md`](../docs/meta-cognition.md).
+
+Cost: roughly 3× the deliberation cost (heavy tier × 3). On top of the K light-tier referee runs, this is meaningful but bounded. Default off; use it for genuinely high-stakes pre-submission reviews where you want the deliberator's verdict itself to be calibrated.
+
+If `--meta-cog` is set without `--heavy`, the flag falls through to the K parallel referee runs themselves: each of the K framings is invoked N=3 times, with consistency comparison per framing. This adds 3× cost across all K runs, so it's expensive — only reasonable for K ≤ 3.
 
 ### Step 7 — Triage with user
 

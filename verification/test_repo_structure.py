@@ -44,6 +44,7 @@ REQUIRED_DOCS = [
     "docs/adapting-gsd.md",
     "docs/adopting-mid-project.md",
     "docs/model-tiers.md",
+    "docs/meta-cognition.md",
     "docs/verification-flow.md",
     "docs/writing-tests.md",
 ]

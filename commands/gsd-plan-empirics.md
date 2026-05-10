@@ -1,7 +1,7 @@
 ---
 description: Plan an empirical phase. Constrains the planner's task schema to econometric work (cluster level, FE structure, SE method, sample restrictions). Spawns identification-checker as plan_check.
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, Task
-arguments: phase_number
+arguments: phase_number [--meta-cog]
 ---
 
 # /gsd-plan-empirics
@@ -100,6 +100,22 @@ Spawn the `identification-checker` agent with the plans as input. It reviews:
 - Are sample restrictions consistent across plans? (No silent compositional changes between baseline and robustness.)
 
 Output: `.planning/phases/XX-<slug>/PLAN-CHECK.md` with verdict per plan.
+
+#### `--meta-cog` mode (optional)
+
+If `--meta-cog` is in `$ARGUMENTS`, replace the single `identification-checker` call with N=3 parallel calls (each is an independent invocation of the same agent on the same input). After all three return:
+
+1. Compare the per-plan verdicts across the three runs.
+2. For each finding (concern about a specific plan or estimator), classify by agreement:
+   - **3/3** — all three runs raised this concern → mark as `high-confidence`
+   - **2/3** — two runs raised it → mark as `medium-confidence`
+   - **1/3** — only one run raised it → mark as `low-confidence`
+3. Aggregate output: a single `PLAN-CHECK.md` with each finding annotated by confidence level. The body of each finding is the merged content from the runs that raised it, paraphrased to avoid redundancy.
+4. If a finding's confidence is low, surface it under "Disagreement detected" rather than the main "Concerns" section. The user reads it but knows the agent isn't sure.
+
+The metacognitive signal here is *agreement*: when N independent runs of the same agent agree, the model's intrinsic confidence is high; when they disagree, it's low. This implements Yona et al. (2026)'s "intrinsic uncertainty estimated via repeated sampling" at the workflow layer. See [`docs/meta-cognition.md`](../docs/meta-cognition.md) for the full rationale and limits of this approach.
+
+Cost: roughly 3× tokens at the identification-checker step. Default off; opt in for high-stakes identification decisions.
 
 ### Step 5 — Iterate if needed
 
