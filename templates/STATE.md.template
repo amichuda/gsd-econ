@@ -1,0 +1,77 @@
+# STATE.md
+
+This template is copied to `.planning/STATE.md` by `/gsd-new-paper`. The verifier and other commands append to this file as the project evolves. It's the durable log.
+
+---
+
+# State
+
+**Project:** <paper title>
+**Created:** <ISO timestamp>
+**Last updated:** <ISO timestamp>
+
+## Position
+
+Currently at: **Phase <N>** — <phase name>
+Status: <not started | in discussion | planned | executing | verifying | complete>
+
+Last verification: <date>
+Open blockers: <count>
+
+## Decisions log
+
+Decisions are recorded here as they're locked. Most flow from `/gsd-discuss-identification` or `/gsd-plan-empirics`.
+
+### <ISO date> — <decision label>
+- Phase: <N>
+- Decision: <what was decided>
+- Rationale: <why>
+- Alternatives considered: <list>
+- Source: <CONTEXT.md path>
+
+### <ISO date> — <decision label>
+...
+
+## Verification history
+
+Appended automatically by `/gsd-verify-replication`.
+
+### <ISO timestamp> — Phase <N> verification
+- Verdict: <PASS | BLOCKED | PROVISIONAL>
+- Tests run: <count>
+- Pass: <count>
+- Fail: <count>
+- Notable: <human-ack on heuristic blockers, judgment-deferred items>
+
+## Pre-registration
+
+- Required: <true | false>
+- Status: <not pre-registered | drafted | submitted | locked>
+- URL: <set after submission>
+- Hash: <SHA-256, set when /gsd-pre-register completes>
+- Submitted at: <date>
+
+## Submission history
+
+Appended by `/gsd-submit-paper` after each submission.
+
+### <ISO timestamp> — Submitted to <journal>
+- Submission ID: <id>
+- Bundle hash: <SHA-256>
+- Open issues acknowledged: <list from referee-sim triage>
+
+## Known weaknesses (from referee-sim triage)
+
+Items the user accepted as "known but won't address" during `/gsd-referee-sim` runs.
+
+### <ISO timestamp> — <weakness>
+- Source: <referee-sim run>
+- Decision: acknowledge (won't fix this round)
+- Rationale: <why>
+
+## Coauthor sign-offs
+
+| Coauthor | Phase 4 | Phase 5 | Phase 6 | Submission |
+|----------|---------|---------|---------|-------------|
+| <name> | ✓ <date> | ✓ <date> | - | - |
+| <name> | ✓ <date> | - | - | - |

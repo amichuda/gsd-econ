@@ -1,0 +1,117 @@
+{
+  "_comment": "Example .claude/settings.json (or .opencode equivalent). Permissions for an empirical paper project.",
+
+  "permissions": {
+    "bash": {
+      "allow": [
+        "git status",
+        "git diff",
+        "git diff --stat",
+        "git log",
+        "git log --oneline",
+        "git add",
+        "git commit",
+        "git submodule",
+        "git submodule update",
+        "git tag",
+        "git checkout",
+        "git rev-parse",
+        "git ls-files",
+
+        "ls",
+        "cat",
+        "head",
+        "tail",
+        "wc",
+        "grep",
+        "find",
+        "tree",
+        "file",
+
+        "Rscript",
+        "R --version",
+
+        "stata-mp -b do",
+        "stata-mp -b run",
+        "stata -b do",
+
+        "python",
+        "python3",
+        "pip list",
+
+        "pdflatex",
+        "xelatex",
+        "lualatex",
+        "biber",
+        "bibtex",
+        "latexdiff",
+
+        "quarto render",
+        "quarto check",
+
+        "make",
+        "make tables",
+        "make figures",
+        "make all",
+
+        "pdftotext",
+        "pdfinfo"
+      ],
+      "deny": [
+        "rm -rf /",
+        "rm -rf ~",
+        "git reset --hard",
+        "git push --force",
+        "git push -f",
+        "curl",
+        "wget"
+      ],
+      "_comment_curl_wget": "Block raw curl/wget; data acquisition should be scripted, reviewable, and IRB-compliant. Use the language-specific HTTP libraries within R/Python scripts instead."
+    },
+
+    "edit": {
+      "allow": [
+        "code/**",
+        "data/clean/**",
+        "tables/**",
+        "figures/**",
+        "paper/**",
+        ".planning/**",
+        "submission/**",
+        "tests/community/**"
+      ],
+      "deny": [
+        "data/raw/**",
+        ".env",
+        ".env.local",
+        "**/credentials.*",
+        "**/*.pem",
+        "**/*.key",
+        "vendor/research-unit-tests/**",
+        "vendor/gsd-econ/**"
+      ],
+      "_comment_data_raw": "Raw data is never edited; transformations live in code/. Vendor directories are upstream-managed; never edit there."
+    }
+  },
+
+  "tool_settings": {
+    "WebFetch": {
+      "allow_domains": [
+        "semanticscholar.org",
+        "api.semanticscholar.org",
+        "nber.org",
+        "ssrn.com",
+        "iza.org",
+        "repec.org",
+        "ideas.repec.org",
+        "aeaweb.org",
+        "academic.oup.com",
+        "jstor.org",
+        "sciencedirect.com",
+        "wiley.com",
+        "tandfonline.com",
+        "springer.com"
+      ]
+    }
+  }
+}

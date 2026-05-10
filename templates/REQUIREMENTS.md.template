@@ -1,0 +1,84 @@
+# REQUIREMENTS.md
+
+This template is copied to `.planning/REQUIREMENTS.md` by `/gsd-new-paper`.
+
+The role is the same as GSD's REQUIREMENTS.md: the place where decisions get pinned. Distinguishes LOCKED (committed) from OPEN (still under discussion or deferred to a future phase).
+
+---
+
+# Requirements
+
+## Hypotheses
+
+### Primary
+
+H1. <falsifiable statement, with the alternative>
+- LOCKED-IN-PHASE-0
+- Source: pre-registered (if applicable)
+
+H2. <if multiple primary>
+- LOCKED-IN-PHASE-0
+
+### Secondary
+
+H3. <hypothesis>
+- LOCKED-IN-PHASE-N
+
+## Outcomes
+
+### Primary outcome(s)
+
+| Outcome | Operational definition | Construction | Status |
+|---------|------------------------|--------------|--------|
+| <name> | <definition> | <variable in dataset, transformation> | LOCKED |
+
+### Secondary outcomes
+
+| Outcome | Operational definition | Construction | Status |
+|---------|------------------------|--------------|--------|
+| ... | ... | ... | LOCKED / OPEN |
+
+## Sample
+
+- Population: <e.g., rural households in country X>
+- Frame: <sampling frame>
+- Eligibility: <criteria>
+- Expected N: <number>
+- Status: LOCKED-IN-PHASE-0
+
+## Treatment / variation source
+
+- What varies: <description>
+- Unit of variation: <village / individual / firm / etc.>
+- Source of variation: <experimental / quasi-experimental / observational>
+- LOCKED-IN-PHASE-0
+
+## Specification choices
+
+### LOCKED
+
+- <choice>: <value> — <rationale, phase locked>
+- Cluster level: <level>
+- SE method: <CR1 | CR2 | wild bootstrap | Conley | ...>
+- Functional form: <linear | log | log-linear | ...>
+- ...
+
+### OPEN
+
+- <choice>: <options under consideration> — <when this gets locked>
+- ...
+
+## Robustness commitments
+
+The robustness section will include (at minimum):
+
+- [ ] <robustness 1>
+- [ ] <robustness 2>
+- [ ] <robustness 3>
+
+## What this paper does NOT claim
+
+- <scope limit 1>
+- <scope limit 2>
+
+(Useful for keeping the contribution honest. Real referees ask "did you also examine X?" — having clear scope limits in REQUIREMENTS.md helps the response.)

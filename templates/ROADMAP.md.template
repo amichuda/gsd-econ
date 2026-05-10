@@ -1,0 +1,171 @@
+# ROADMAP.md
+
+This template is copied to `.planning/ROADMAP.md` by `/gsd-new-paper`. The default phases below are the typical empirical pipeline; adapt to your project.
+
+---
+
+# Roadmap
+
+## Phase 1 — Data acquisition and cleaning
+
+**Goal.** Move from raw data to an analysis-ready panel/cross-section.
+
+**Inputs.** Raw data sources (list with provenance).
+
+**Outputs.**
+- `data/clean/<dataset>.parquet` (or `.dta`, `.RDS`)
+- `data/README.md` documenting variables and construction
+- `code/01_clean.{R|do|py}` with a top-level run target
+
+**Identification context.** Not yet relevant; this phase is about data hygiene.
+
+**Tests this phase must pass:**
+- `universal-sample-restrictions-stated`
+- (data integrity tests if any)
+
+---
+
+## Phase 2 — Stylized facts and descriptives
+
+**Goal.** Document the patterns that motivate the paper. Tables and figures live here.
+
+**Inputs.** Phase 1 output.
+
+**Outputs.**
+- `tables/01_descriptives.tex`
+- `figures/01_motivating_*.pdf`
+- Section 2 of the paper draft
+
+**Identification context.** Pure description; no causal claims.
+
+**Tests this phase must pass:**
+- `universal-tables-have-n-obs`
+- `universal-sample-restrictions-stated`
+
+---
+
+## Phase 3 — Identification diagnostics
+
+**Goal.** Show the design works. Parallel trends (DiD), first stage (IV), manipulation tests (RD), balance (RCT).
+
+**Inputs.** Phase 1 output, locked decisions from `/gsd-discuss-identification`.
+
+**Outputs.**
+- `tables/02_first_stage.tex` (if IV) or `tables/02_balance.tex` (if RCT)
+- `figures/02_event_study.pdf` (if DiD)
+- `figures/02_density_at_cutoff.pdf` (if RD)
+- Identification subsection of the paper draft
+
+**Identification context.** This is the phase. Locked decisions from `/gsd-discuss-identification` constrain everything.
+
+**Tests this phase must pass (intersection of methodology tags + universal):**
+- DiD: `did-parallel-trends-plot`, `did-staggered-heterogeneous-effects` (if staggered)
+- IV: `iv-first-stage-f-stat`, `iv-weak-instrument-robust-inference`, `iv-exclusion-narrative-explicit`
+- RD: `rdd-bandwidth-sensitivity`, `rdd-manipulation-test`
+- RCT: `experiment_field-attrition-balance`, `experiment_field-balance-table`
+- All: `universal-clustered-ses-justified`
+
+---
+
+## Phase 4 — Main specification
+
+**Goal.** Produce the main results table.
+
+**Inputs.** Phase 1 cleaned data, locked decisions.
+
+**Outputs.**
+- `tables/03_main.tex`
+- `code/04_main_results.{R|do|py}`
+- Section 4 of the paper draft
+
+**Tests:**
+- `universal-tables-have-n-obs`
+- `universal-clustered-ses-justified`
+- methodology-specific tests as in Phase 3
+
+---
+
+## Phase 5 — Robustness and heterogeneity
+
+**Goal.** Show the result is not an artifact of specification choices.
+
+**Inputs.** Phase 4 main results.
+
+**Outputs.**
+- `tables/04_robustness.tex`
+- `tables/05_heterogeneity.tex`
+- Robustness section of the paper
+
+**Robustness commitments** (from REQUIREMENTS.md):
+- [ ] <robustness 1>
+- [ ] <robustness 2>
+
+**Tests:**
+- All Phase 4 tests
+- `universal-multiple-testing-corrected` (if multiple primary outcomes)
+
+---
+
+## Phase 6 — Monte Carlo / power (optional)
+
+**Goal.** Demonstrate the design has power and the estimator behaves as expected. Optional; mostly for methodological papers.
+
+**Outputs.** Simulation tables and figures.
+
+**Tests:** universal + methodology-specific.
+
+---
+
+## Phase 7 — Tables and figures pipeline
+
+**Goal.** Final, publication-quality tables and figures. Run via `/gsd-tables-figures`.
+
+**Outputs.**
+- All tables and figures finalized in publication style
+- Cross-references resolved
+- House style consistent
+
+**Tests:**
+- `universal-tables-have-n-obs`
+- `universal-clustered-ses-justified`
+
+---
+
+## Phase 8 — Manuscript writing
+
+**Goal.** Complete intro, related literature, conclusion, abstract. Polish all sections.
+
+**Outputs.**
+- `paper/manuscript.tex`
+- `paper/online-appendix.tex`
+- All section drafts complete
+
+**Tests:** none auto-loaded; `/gsd-referee-sim` runs after this phase.
+
+---
+
+## Phase 9 — Replication package and submission
+
+**Goal.** Build the submission bundle. Run via `/gsd-submit-paper`.
+
+**Outputs.**
+- `submission/` directory complete
+- Replication smoke test passes
+- Cover letter drafted
+- Coauthor sign-off
+
+**Tests:**
+- `universal-replication-reproduces-results` (the big one)
+- All blocker tests across all phases must pass
+
+---
+
+## Adapting the roadmap
+
+For methodological papers (theory + simulation): swap Phase 6 in earlier, Phase 5 lighter.
+
+For pure theory papers: collapse Phases 1, 3, 4 into a "model + comparative statics" phase, keep 8–9.
+
+For RCT papers: insert a "pre-registration" phase between Phase 1 and Phase 3, locking the PAP before any analysis.
+
+For replication papers (you're replicating someone else): start at Phase 4 with the original spec, add a robustness/extension phase, conclude with `universal-replication-reproduces-results` against the original.

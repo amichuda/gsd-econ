@@ -1,0 +1,111 @@
+# =============================================================================
+# Citation metadata for gsd-econ
+#
+# This file follows the Citation File Format (CFF) v1.2.0 specification:
+# https://citation-file-format.github.com/
+#
+# GitHub will detect this file and add a "Cite this repository" button to the
+# repo page. Tools like cffconvert, Zotero, and Zenodo can also parse it.
+#
+# OPTIONAL EDITS:
+#   - Add your ORCID under `authors` (uncomment the orcid line and paste it).
+#   - When you tag a release, update `version` and `date-released`.
+#   - If you ever archive a release on Zenodo, add the DOI under `identifiers`.
+#
+# Validate the file after editing:
+#   pip install cffconvert
+#   cffconvert --validate
+# =============================================================================
+
+cff-version: 1.2.0
+message: "If you use this software in research, please cite it using the metadata in this file, and consider acknowledging the upstream tools (GSD and research-unit-tests) it builds on."
+type: software
+title: "gsd-econ: A spec-driven workflow for empirical economics research"
+abstract: >-
+  gsd-econ is an overlay for the GSD (get-shit-done) framework that adapts its
+  spec-driven development primitives to the structure of an empirical economics
+  paper. It integrates the research-unit-tests taxonomy as the verification
+  layer at every phase gate, adds methodology-aware commands and subagents
+  (identification-checker, econometrician, replication-verifier, polish-pass,
+  referee-sim with parallel deliberation), and enforces an audit trail from
+  research question through submission. Designed for both new papers and
+  mid-project adoption.
+authors:
+  - family-names: Michuda
+    given-names: Aleksandr
+    orcid: "https://orcid.org/0000-0001-6855-5107"
+    affiliation: "Swarthmore College"
+
+repository-code: "https://github.com/amichuda/gsd-econ"
+license: MIT
+keywords:
+  - empirical economics
+  - causal inference
+  - reproducible research
+  - peer review automation
+  - llm agents
+  - spec-driven development
+  - econometrics
+  - replication
+
+# Update these whenever you tag a release.
+version: 0.1.0
+date-released: "2026-05-07"
+
+# Acknowledgments to upstream projects this work builds on. These are not
+# co-authors — they're prior art / dependencies — so they go in `references`,
+# not `authors`.
+references:
+  - type: software
+    title: "get-shit-done (GSD): a context-engineering and orchestration framework for AI coding agents"
+    authors:
+      - name: "TÂCHES"
+    repository-code: "https://github.com/gsd-build/get-shit-done"
+    license: MIT
+    notes: "gsd-econ is built as an overlay on top of GSD's primitives (discuss/plan/execute/verify loop, multi-agent orchestration, atomic commits)."
+
+  - type: software
+    title: "research-unit-tests: declarative quality checks for empirical research"
+    authors:
+      - name: "rdahis"
+    repository-code: "https://github.com/rdahis/research-unit-tests"
+    license: MIT
+    notes: "research-unit-tests provides the test taxonomy (methodology, scope, severity, clarity tags) that gsd-econ uses as its verification grammar at every phase gate."
+
+  - type: software
+    title: "HeavySkill: Heavy Thinking as the Inner Skill in Agentic Harness"
+    authors:
+      - family-names: Wang
+        given-names: Jianing
+      - family-names: Guo
+        given-names: Linsen
+      - family-names: Chen
+        given-names: Zhengyu
+    repository-code: "https://github.com/wjn1996/HeavySkill"
+    license: Apache-2.0
+    notes: >-
+      The architectural pattern in gsd-econ's --heavy mode of /gsd-referee-sim
+      (K parallel light-tier agents synthesized by a heavy-tier deliberator)
+      is conceptually inspired by HeavySkill. The integration with adversarial
+      peer review is original. Full author list is available in the HeavySkill
+      repository's README.
+
+  - type: article
+    title: "Hallucinations Undermine Trust; Metacognition is a Way Forward"
+    authors:
+      - family-names: Yona
+        given-names: Gal
+      - family-names: Geva
+        given-names: Mor
+      - family-names: Matias
+        given-names: Yossi
+    year: 2026
+    identifiers:
+      - type: other
+        value: "arXiv:2605.01428"
+        description: "arXiv preprint"
+    url: "https://arxiv.org/abs/2605.01428"
+    notes: >-
+      The framing of rules/uncertainty-honesty.md — hallucinations as
+      confident errors, the known/partial/unknown distinction, and uncertainty
+      as a control signal for tool use — draws on this position paper.

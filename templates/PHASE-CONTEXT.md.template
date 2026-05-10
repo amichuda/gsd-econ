@@ -1,0 +1,84 @@
+# PHASE-CONTEXT.md
+
+This template is copied to `.planning/phases/XX-<slug>/CONTEXT.md` by `/gsd-discuss-identification`.
+
+---
+
+# Phase <N> — Context
+
+## Phase scope
+<one paragraph describing what this phase produces>
+
+## Methodology in scope
+- Primary: <tag from METHODOLOGY.md>
+- Secondary: <tags>
+- This phase's role in identification: <one sentence>
+
+## Locked decisions
+
+Decisions tagged `[LOCKED-IN-PHASE-<N>]` here will be enforced by the verifier and respected by all plans in this phase.
+
+- <decision>: <choice>
+  - Rationale: <why>
+  - Alternatives considered: <list>
+  - `[LOCKED-IN-PHASE-<N>]`
+
+- <decision>: <choice>
+  - `[LOCKED-IN-PHASE-<N>]`
+
+## Open questions
+
+Items raised in discussion but not locked. They either:
+- Defer to a later phase (note which)
+- Escalate to a coauthor (note who)
+- Become a planning task (the planner will address)
+
+- <question>: <reason it's not locked>
+  - Disposition: <defer-to-phase-N | escalate-to-<coauthor> | planning-task>
+
+## Implications for planning
+
+Concrete guidance for `/gsd-plan-empirics`:
+
+- The planner SHOULD produce tasks that:
+  - <task type>
+  - <task type>
+- The planner should NOT:
+  - <exclusion>
+  - <exclusion>
+
+## Tests this phase must pass
+
+Loaded from registry by methodology + scope intersection, plus phase-specific additions.
+
+From registry:
+- <test_id>
+- <test_id>
+
+Phase-specific (added based on locked decisions):
+- <test_id> (because we locked X)
+
+## Evidence to produce for verification
+
+For each test, what artifact is needed:
+
+- <test_id>: <artifact path>
+- <test_id>: <artifact path>
+
+## References
+
+Methodological references that came up in discussion:
+- <citation>
+- <citation>
+
+## Discussion log
+
+Brief running log of the discussion (so the planner has context):
+
+> User: <key input>
+>
+> Claude: <response or question>
+>
+> User: <key input>
+>
+> ...

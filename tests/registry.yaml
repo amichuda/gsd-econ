@@ -1,0 +1,68 @@
+# gsd-econ test registry
+# Format matches research-unit-tests upstream so the verifier can merge them.
+# https://github.com/rdahis/research-unit-tests
+
+tests:
+  - id: iv-exclusion-narrative-explicit
+    name: Exclusion restriction is argued in prose, not just asserted
+    methodology: iv
+    scope: paper
+    severity: blocker
+    clarity: heuristic
+    path: tests/core/iv-exclusion-narrative-explicit.md
+
+  - id: iv-weak-instrument-robust-inference
+    name: Weak-instrument-robust inference reported when first-stage F is low
+    methodology: iv
+    scope: paper
+    severity: blocker
+    clarity: deterministic
+    path: tests/core/iv-weak-instrument-robust-inference.md
+
+  - id: did-conley-ses-when-spatial
+    name: Conley standard errors used when units have geographic structure
+    methodology: did
+    scope: paper
+    severity: warning
+    clarity: heuristic
+    path: tests/core/did-conley-ses-when-spatial.md
+
+  - id: experiment_field-attrition-balance
+    name: Differential attrition is balanced across treatment arms
+    methodology: experiment_field
+    scope: paper
+    severity: blocker
+    clarity: deterministic
+    path: tests/core/experiment_field-attrition-balance.md
+
+  - id: experiment_field-pap-deviation-disclosed
+    name: Deviations from pre-analysis plan are disclosed
+    methodology: experiment_field
+    scope: paper
+    severity: blocker
+    clarity: deterministic
+    path: tests/core/experiment_field-pap-deviation-disclosed.md
+
+  - id: universal-clustered-ses-justified
+    name: Cluster level for SEs is stated and matches the variation
+    methodology: universal
+    scope: paper
+    severity: warning
+    clarity: deterministic
+    path: tests/core/universal-clustered-ses-justified.md
+
+  - id: universal-multiple-testing-corrected
+    name: Multiple-testing correction applied for multiple primary outcomes
+    methodology: universal
+    scope: paper
+    severity: warning
+    clarity: heuristic
+    path: tests/core/universal-multiple-testing-corrected.md
+
+  - id: universal-sample-restrictions-stated
+    name: Sample restrictions are stated explicitly
+    methodology: universal
+    scope: paper
+    severity: blocker
+    clarity: deterministic
+    path: tests/core/universal-sample-restrictions-stated.md

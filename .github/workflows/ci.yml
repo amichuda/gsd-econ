@@ -1,0 +1,34 @@
+name: verify
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install verification suite dependencies
+        run: pip install -r verification/requirements.txt
+
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+
+      - name: Make shell scripts executable
+        run: chmod +x scripts/*.sh
+
+      - name: Run verification suite
+        run: pytest verification/ -v --tb=short
+
+      - name: Run shellcheck explicitly
+        run: shellcheck scripts/*.sh

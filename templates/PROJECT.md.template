@@ -1,0 +1,58 @@
+# PROJECT.md
+
+This template is copied to `.planning/PROJECT.md` by `/gsd-new-paper`.
+
+---
+
+# <Paper title>
+
+## Research question
+
+<One sentence. The thing the paper answers.>
+
+## Contribution
+
+<One paragraph. The "we show that..." sentence and what it adds to the literature.>
+
+## Target journal
+
+<Top general | top field | specialty. Be specific.>
+
+Acceptable alternatives if rejected:
+
+1. <journal>
+2. <journal>
+
+## Authors
+
+| Name | Affiliation | Role | Email |
+|------|-------------|------|-------|
+| <name> | <inst> | First author | <email> |
+| <name> | <inst> | Coauthor | <email> |
+
+## Timeline
+
+- Working paper draft: <date>
+- Submission target: <date>
+- Tenure clock: <if relevant>
+- Conference deadlines: <list>
+
+## Status
+
+- Phase: <number from ROADMAP.md>
+- Last verification: <date>
+- Open blockers: <count>
+
+## Working paper / preprint
+
+- NBER WP: <number or ->
+- SSRN: <id or ->
+- IZA DP: <number or ->
+- Personal website: <URL or ->
+
+## Funding and acknowledgments
+
+- Grant numbers: <list>
+- IRB protocol: <number, expiration>
+- Pre-registration: <URL or "not pre-registered" or "pending">
+- Conflict of interest: <statement>

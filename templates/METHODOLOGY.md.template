@@ -1,0 +1,67 @@
+# METHODOLOGY.md
+
+This template is copied to `.planning/METHODOLOGY.md` by `/gsd-new-paper`.
+
+This file is **the** driver of which RUT tests gate each phase. The verifier reads `primary`, `secondary`, `scope`, and the test inclusions/exclusions. Get this right.
+
+---
+
+```yaml
+# Methodology declaration
+
+# Primary identification strategy. Pick exactly one.
+# Valid: did, rdd, iv, ols, synth, experiment_lab, experiment_field, theory, ml_prediction, survey
+primary: did
+
+# Secondary methodologies (zero or more). Tests for these load too.
+secondary:
+  - ols       # for descriptive baselines
+  - iv        # if used in robustness
+
+# Scope of the work. Determines which test scope filters apply.
+# Valid: paper, proposal, replication
+scope: paper
+
+# Target journal (short handle).
+# Determines reference point for "competent referee at this journal" calibration in referee-sim.
+target_journal: jae   # journal of applied econometrics. Other examples: aer, qje, jpe, restud, ej, jole
+
+# Pre-registration status
+prereg:
+  required: false      # set true for RCTs and prospective designs
+  url: ""              # AEA registry / OSF / AsPredicted URL after submission
+  hash: ""             # SHA-256 of the registered PAP file (set by /gsd-pre-register)
+  submitted_at: ""     # ISO date
+
+# Tests to FORCE-include even if registry filter would not load them.
+# Useful for tests that the verifier's filter doesn't catch but which apply.
+test_inclusions: []
+
+# Tests to EXCLUDE. Each must have a written justification (not just a list).
+# The verifier surfaces exclusions in VERIFICATION.md for the audit trail.
+test_exclusions:
+  # - id: did-conley-ses-when-spatial
+  #   reason: "Treatment varies at state level (50 states); within-state spatial correlation
+  #            is captured by state clustering. Conley would be redundant."
+
+# Replication target. The replication-verifier checks this on submit.
+replication:
+  reproduces_in: 60       # minutes; the replication smoke test allows this much wall time
+  language: R             # R / Stata / Python / Julia / mixed
+  data_access: public     # public / restricted / synthetic
+```
+
+---
+
+## How this file drives the workflow
+
+- `/gsd-discuss-identification` reads `primary` to route the question set (DiD asks parallel-trends, IV asks exclusion, etc.).
+- `/gsd-plan-empirics` reads `primary` and `secondary` to constrain the planner's task schema.
+- `/gsd-verify-replication` reads everything: tag intersection determines applicable tests; `test_exclusions` removes them; `prereg` activates pre-registration-related tests; `replication.reproduces_in` is the smoke test budget.
+- `/gsd-submit-paper` reads `target_journal` and `replication` to validate the submission bundle.
+
+## Editing rules
+
+- **`primary` and `secondary`** can change as the paper evolves (rare but happens). When they do, run `/gsd-test-paper` to surface tests that were skipped under the old declaration.
+- **`prereg.url` and `prereg.hash`** should be set once and never edited after. Editing the hash defeats the integrity check. If you need to update the PAP after registration, that's a deviation — document it in the paper, don't silently fix the file.
+- **`test_exclusions`** is for transparent exclusion. Every entry needs a `reason`. The verifier will refuse to honor exclusions without justification.

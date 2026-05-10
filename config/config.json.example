@@ -1,0 +1,75 @@
+{
+  "$schema": "https://gsd-build.github.io/get-shit-done/schema/config.json",
+  "version": 1,
+  "_comment": "Example .planning/config.json for a paper project. The install script applies this on top of GSD's defaults.",
+
+  "workflow": {
+    "discuss_mode": "discuss",
+    "research_before_questions": true,
+    "research": true,
+    "plan_check": true,
+    "verifier": true,
+    "auto_commit": true
+  },
+
+  "model_profile": {
+    "default": "balanced",
+    "discuss": "quality",
+    "plan": "quality",
+    "plan_check": "quality",
+    "execute": "balanced",
+    "verify": "balanced",
+    "research": "balanced",
+    "_comment": "Quality model for identification reasoning; balanced for execution. Adjust based on your runtime's profile names. This controls the orchestrator's model per phase."
+  },
+
+  "model_tiers": {
+    "_comment": "Maps reasoning-load tiers (declared in agent frontmatter as model_tier: light|standard|heavy) to actual models. Edit these to your provider/model choices.",
+    "light":    "claude-haiku-4-5",
+    "standard": "claude-sonnet-4-6",
+    "heavy":    "claude-opus-4-7"
+  },
+
+  "agent_skills": {
+    "verifier": [
+      "./vendor/research-unit-tests/.claude",
+      "./vendor/research-unit-tests/core",
+      "./vendor/gsd-econ/skills/econ-research",
+      "./vendor/gsd-econ/tests"
+    ],
+    "plan_check": [
+      "./vendor/research-unit-tests/.claude",
+      "./vendor/gsd-econ/skills/econ-research"
+    ],
+    "research": [
+      "./vendor/gsd-econ/skills/econ-research"
+    ]
+  },
+
+  "test_registries": {
+    "_comment": "Registries the verifier merges. Order matters for test_id collision resolution (later wins).",
+    "paths": [
+      "./vendor/research-unit-tests/registry.yaml",
+      "./vendor/gsd-econ/tests/registry.yaml"
+    ]
+  },
+
+  "phase_template": {
+    "_comment": "Per-phase artifacts the workflow produces. CONTEXT.md, RESEARCH.md, PLAN-CHECK.md, VERIFICATION.md are gsd-econ additions.",
+    "files": [
+      "CONTEXT.md",
+      "RESEARCH.md",
+      "*-PLAN.md",
+      "PLAN-CHECK.md",
+      "*-SUMMARY.md",
+      "VERIFICATION.md",
+      "FIX-*-PLAN.md"
+    ]
+  },
+
+  "commit": {
+    "atomic": true,
+    "message_format": "<type>(phase-<n>): <summary>",
+    "_comment": "One commit per task. Same as GSD default."
+  }
+}
