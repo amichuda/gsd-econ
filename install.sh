@@ -300,6 +300,57 @@ symlink_dir_contents() {
     done
 }
 
+# Place agent files for a specific runtime.
+# For "claude": symlinks (frontmatter is Claude Code format natively).
+# For "opencode": copies with frontmatter transformed via the python helper,
+#                 since OpenCode requires a different YAML schema for tools.
+# Args: $1 = src_dir, $2 = dst_dir, $3 = runtime (claude|opencode)
+place_agents() {
+    local src_dir="$1"
+    local dst_dir="$2"
+    local runtime="$3"
+
+    if [[ "$runtime" == "claude" ]]; then
+        symlink_dir_contents "$src_dir" "$dst_dir"
+        return 0
+    fi
+
+    # OpenCode path: copy with frontmatter transform.
+    local transform_script="$GSD_ECON_SRC/scripts/transform-agent-frontmatter.py"
+    if [[ ! -f "$transform_script" ]]; then
+        err "OpenCode frontmatter transform script not found at $transform_script"
+    fi
+    if ! command -v python3 >/dev/null 2>&1; then
+        err "python3 is required to install agents for OpenCode (frontmatter transform)."
+    fi
+
+    run "mkdir -p '$dst_dir'"
+    for f in "$src_dir"/*.md; do
+        [[ -f "$f" ]] || continue
+        local name target
+        name=$(basename "$f")
+        target="$dst_dir/$name"
+        # Refuse to clobber non-transformed files (heuristic: skip if file
+        # exists and is not one we previously wrote).
+        if [[ -e "$target" && ! -L "$target" ]]; then
+            # Check if it looks like a previously-transformed file
+            if ! head -10 "$target" 2>/dev/null | grep -q "mode: subagent"; then
+                warn "$target exists and doesn't look like a transformed agent — leaving alone."
+                continue
+            fi
+        fi
+        # If it's a symlink (left over from a prior claude install), remove it.
+        [[ -L "$target" ]] && rm -f "$target"
+        if [[ "$DRY_RUN" == 1 ]]; then
+            echo "[dry-run] python3 '$transform_script' '$f' '$target'"
+        else
+            python3 "$transform_script" "$f" "$target" || \
+                err "Failed to transform agent $name for OpenCode"
+            echo "  ✓ $name (frontmatter transformed for OpenCode)"
+        fi
+    done
+}
+
 # -----------------------------------------------------------------------------
 # Config wiring (project only)
 # -----------------------------------------------------------------------------
@@ -492,7 +543,7 @@ do_project_install() {
         log "Linking commands into $CMD_DIR/"
         symlink_dir_contents "$GSD_ECON_SRC/commands" "$CMD_DIR"
         log "Linking agents into $AGENT_DIR/"
-        symlink_dir_contents "$GSD_ECON_SRC/agents" "$AGENT_DIR"
+        place_agents "$GSD_ECON_SRC/agents" "$AGENT_DIR" "$r"
     done
 
     # Step 5 — wire config and copy templates
@@ -540,7 +591,7 @@ do_global_install() {
         log "Linking commands into $CMD_DIR/"
         symlink_dir_contents "$GSD_ECON_SRC/commands" "$CMD_DIR"
         log "Linking agents into $AGENT_DIR/"
-        symlink_dir_contents "$GSD_ECON_SRC/agents" "$AGENT_DIR"
+        place_agents "$GSD_ECON_SRC/agents" "$AGENT_DIR" "$r"
     done
 
     cat <<EOF
@@ -597,7 +648,7 @@ do_wire_only() {
         log "Re-linking commands into $CMD_DIR/"
         symlink_dir_contents "$source_dir/commands" "$CMD_DIR"
         log "Re-linking agents into $AGENT_DIR/"
-        symlink_dir_contents "$source_dir/agents" "$AGENT_DIR"
+        place_agents "$source_dir/agents" "$AGENT_DIR" "$r"
     done
 
     # Re-merge config (idempotent via jq) and re-copy any new rule files
