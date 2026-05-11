@@ -136,3 +136,106 @@ def test_transform_maps_websearch_to_webfetch(repo_root: Path) -> None:
         assert "webfetch: true" in fm, (
             f"{agent.name}: webfetch should be present after mapping from websearch"
         )
+
+
+def _transform_with_config(repo_root: Path, agent_path: Path, config_path: Path) -> str:
+    """Run the transform script with --config; return transformed content."""
+    script = repo_root / "scripts" / "transform-agent-frontmatter.py"
+    result = subprocess.run(
+        [sys.executable, str(script), "--config", str(config_path),
+         str(agent_path), "-"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        pytest.fail(
+            f"Transform with --config failed for {agent_path.name}:\n"
+            f"stdout: {result.stdout}\nstderr: {result.stderr}"
+        )
+    return result.stdout
+
+
+def test_tier_resolution_emits_model_field(repo_root: Path) -> None:
+    """When --config maps the tier to a model, transform must emit `model:`.
+
+    This is the load-bearing behavior: without it, OpenCode subagents
+    inherit the session model and the tier system is decorative.
+    """
+    config_example = repo_root / "config" / "config.json.example"
+    assert config_example.exists(), "config.json.example missing"
+
+    # Pick one agent per tier and verify resolution.
+    by_tier: dict[str, Path] = {}
+    for agent in (repo_root / "agents").glob("*.md"):
+        text = agent.read_text(encoding="utf-8")
+        fm = text.split("---\n", 2)[1] if "---\n" in text else ""
+        for line in fm.split("\n"):
+            if line.startswith("model_tier:"):
+                tier = line.split(":", 1)[1].strip()
+                by_tier.setdefault(tier, agent)
+                break
+
+    for tier in ("light", "standard", "heavy"):
+        if tier not in by_tier:
+            continue
+        transformed = _transform_with_config(repo_root, by_tier[tier], config_example)
+        fm = transformed.split("---\n", 2)[1]
+        assert "model:" in fm, (
+            f"Agent {by_tier[tier].name} (tier={tier}): no `model:` field "
+            f"after transform with config. Tier resolution is broken."
+        )
+        # Sanity: the model line should not be empty.
+        model_line = next(
+            (line for line in fm.split("\n") if line.startswith("model:")),
+            None,
+        )
+        assert model_line and model_line != "model:" and model_line != "model: ", (
+            f"Agent {by_tier[tier].name}: `model:` is empty after resolution."
+        )
+
+
+def test_tier_resolution_skipped_without_config(repo_root: Path) -> None:
+    """Without --config, no `model:` is emitted — agent inherits session default."""
+    agents_dir = repo_root / "agents"
+    sample = next(agents_dir.glob("*.md"), None)
+    if sample is None:
+        pytest.skip("No agents to test")
+    transformed = _transform(repo_root, sample)
+    fm = transformed.split("---\n", 2)[1]
+    # If the source agent declares an explicit model: field, that's allowed.
+    # Otherwise no model: should appear in transform output.
+    source_fm = sample.read_text(encoding="utf-8").split("---\n", 2)[1]
+    source_has_model = any(
+        line.startswith("model:") and not line.startswith("model_tier:")
+        for line in source_fm.split("\n")
+    )
+    if not source_has_model:
+        for line in fm.split("\n"):
+            assert not (line.startswith("model:") and not line.startswith("model_tier:")), (
+                f"Without --config, transform should not emit `model:` "
+                f"(it would force a specific model on the subagent and defeat "
+                f"the design that lets it inherit). Got: {line}"
+            )
+
+
+def test_config_example_has_provider_prefixed_models(repo_root: Path) -> None:
+    """config.json.example must use provider-prefixed model strings.
+
+    OpenCode requires provider/model format (e.g., 'anthropic/claude-opus-4-7')
+    not bare model names. Bare names worked under Claude Code but break OpenCode.
+    """
+    import json
+    config_path = repo_root / "config" / "config.json.example"
+    data = json.loads(config_path.read_text(encoding="utf-8"))
+    tiers = data.get("model_tiers", {})
+    for tier, model in tiers.items():
+        if tier.startswith("_"):  # comment fields
+            continue
+        assert isinstance(model, str), (
+            f"Tier {tier} in config.json.example is not a string"
+        )
+        assert "/" in model, (
+            f"Tier {tier} in config.json.example uses bare model name '{model}'; "
+            "OpenCode requires provider-prefixed format like 'anthropic/...'"
+        )

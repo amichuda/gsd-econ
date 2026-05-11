@@ -24,10 +24,10 @@
   },
 
   "model_tiers": {
-    "_comment": "Maps reasoning-load tiers (declared in agent frontmatter as model_tier: light|standard|heavy) to actual models. Edit these to your provider/model choices.",
-    "light":    "claude-haiku-4-5",
-    "standard": "claude-sonnet-4-6",
-    "heavy":    "claude-opus-4-7"
+    "_comment": "Maps reasoning-load tiers (declared in agent frontmatter as model_tier: light|standard|heavy) to actual model strings. Format depends on your runtime: Claude Code accepts bare names ('claude-opus-4-7') or provider-prefixed; OpenCode requires provider-prefixed ('anthropic/claude-opus-4-7' or 'openrouter/anthropic/claude-opus-4-7'). install.sh writes whatever you put here into each OpenCode agent's model field at install time. After editing, re-run install.sh --wire-only to propagate.",
+    "light":    "anthropic/claude-haiku-4-5",
+    "standard": "anthropic/claude-sonnet-4-6",
+    "heavy":    "anthropic/claude-opus-4-7"
   },
 
   "agent_skills": {

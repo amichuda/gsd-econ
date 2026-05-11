@@ -16,6 +16,7 @@ OpenCode format (target):
     ---
     description: "..."
     mode: subagent
+    model: anthropic/claude-sonnet-4-6     # resolved from model_tier if config.json found
     tools:
       read: true
       bash: true
@@ -33,15 +34,21 @@ Key differences handled:
 - `WebSearch` maps to a no-op since OpenCode's `websearch` is gated behind
   the OpenCode provider or OPENCODE_ENABLE_EXA env var — we emit `webfetch`
   instead (which the agent prompts use as a fallback anyway).
-- `model_tier` is a gsd-econ-specific field; OpenCode's frontmatter parser
-  ignores unknown fields, so it passes through harmlessly.
+- `model_tier` is gsd-econ-specific. If a config.json is provided via
+  --config and contains a `model_tiers` block mapping this tier to a
+  model string, that string is emitted as `model:` so OpenCode actually
+  routes the subagent to the right model. Without --config, no `model:`
+  is emitted and the subagent inherits the session default.
 
 Usage:
     python3 transform-agent-frontmatter.py <input.md> <output.md>
+    python3 transform-agent-frontmatter.py --config <config.json> <input.md> <output.md>
     cat agent.md | python3 transform-agent-frontmatter.py - -
 """
 from __future__ import annotations
 
+import argparse
+import json
 import re
 import sys
 from pathlib import Path
@@ -67,8 +74,36 @@ TOOL_NAME_MAP = {
 }
 
 
-def transform_frontmatter(content: str) -> str:
-    """Return content with frontmatter rewritten for OpenCode."""
+def load_model_tiers(config_path: Path | None) -> dict[str, str]:
+    """Load model_tiers mapping from a gsd-econ config.json, if provided.
+
+    Returns an empty dict if config_path is None, missing, or has no tiers.
+    """
+    if config_path is None or not config_path.exists():
+        return {}
+    try:
+        data = json.loads(config_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {}
+    tiers = data.get("model_tiers", {})
+    if not isinstance(tiers, dict):
+        return {}
+    # Drop _comment and other non-tier keys.
+    return {
+        k: v for k, v in tiers.items()
+        if not k.startswith("_") and isinstance(v, str)
+    }
+
+
+def transform_frontmatter(content: str, model_tiers: dict[str, str] | None = None) -> str:
+    """Return content with frontmatter rewritten for OpenCode.
+
+    If model_tiers is provided and the agent declares a model_tier present
+    in the map, an explicit `model:` field is emitted so OpenCode routes
+    the subagent to the right model rather than inheriting the session
+    default.
+    """
+    model_tiers = model_tiers or {}
     match = re.match(r"^---\n(.*?)\n---\n(.*)$", content, re.DOTALL)
     if not match:
         # No frontmatter — return unchanged.
@@ -119,6 +154,14 @@ def transform_frontmatter(content: str) -> str:
     # Drop `name` — OpenCode infers from filename.
     fields.pop("name", None)
 
+    # Resolve model from model_tier if a tier mapping was provided.
+    # Don't overwrite an explicit `model:` field if the source already has one.
+    tier = fields.get("model_tier", "").strip()
+    has_explicit_model = "model" in fields and fields["model"].strip()
+    resolved_model: str | None = None
+    if tier and tier in model_tiers and not has_explicit_model:
+        resolved_model = model_tiers[tier]
+
     # Compose new frontmatter.
     out: list[str] = ["---"]
     # description first (OpenCode requires it)
@@ -126,9 +169,14 @@ def transform_frontmatter(content: str) -> str:
         out.append(f"description: {fields.pop('description')}")
     # mode (required by OpenCode for non-primary agents)
     out.append(f"mode: {fields.pop('mode', 'subagent')}")
+    # model (resolved from tier or explicit)
+    if has_explicit_model:
+        out.append(f"model: {fields.pop('model')}")
+    elif resolved_model is not None:
+        out.append(f"model: {resolved_model}")
     # tools
     out.extend(new_tools_lines)
-    # Any remaining fields (model_tier, model, temperature, etc.)
+    # Any remaining fields (model_tier, temperature, etc.)
     for k, v in fields.items():
         out.append(f"{k}: {v}")
     out.append("---")
@@ -137,21 +185,29 @@ def transform_frontmatter(content: str) -> str:
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) != 3:
-        print(__doc__, file=sys.stderr)
-        return 2
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument(
+        "--config",
+        type=Path,
+        default=None,
+        help="Path to a gsd-econ .planning/config.json; used to resolve model_tier → model.",
+    )
+    parser.add_argument("input", help="Input markdown file, or '-' for stdin.")
+    parser.add_argument("output", help="Output markdown file, or '-' for stdout.")
+    args = parser.parse_args(argv[1:])
 
-    if argv[1] == "-":
+    if args.input == "-":
         content = sys.stdin.read()
     else:
-        content = Path(argv[1]).read_text(encoding="utf-8")
+        content = Path(args.input).read_text(encoding="utf-8")
 
-    out = transform_frontmatter(content)
+    model_tiers = load_model_tiers(args.config)
+    out = transform_frontmatter(content, model_tiers)
 
-    if argv[2] == "-":
+    if args.output == "-":
         sys.stdout.write(out)
     else:
-        Path(argv[2]).write_text(out, encoding="utf-8")
+        Path(args.output).write_text(out, encoding="utf-8")
     return 0
 
 

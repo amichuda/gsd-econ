@@ -304,6 +304,9 @@ symlink_dir_contents() {
 # For "claude": symlinks (frontmatter is Claude Code format natively).
 # For "opencode": copies with frontmatter transformed via the python helper,
 #                 since OpenCode requires a different YAML schema for tools.
+#                 Also resolves model_tier -> model from .planning/config.json
+#                 if available (so subagents actually route to their tier's
+#                 model rather than inheriting the session default).
 # Args: $1 = src_dir, $2 = dst_dir, $3 = runtime (claude|opencode)
 place_agents() {
     local src_dir="$1"
@@ -324,6 +327,26 @@ place_agents() {
         err "python3 is required to install agents for OpenCode (frontmatter transform)."
     fi
 
+    # If a .planning/config.json exists in the project, pass it to the transform
+    # so model_tier resolves to an explicit `model:` field. Without this, every
+    # subagent inherits the session default model — the tier system is dead.
+    local config_arg=""
+    if [[ -n "${PROJECT_DIR:-}" && -f "$PROJECT_DIR/.planning/config.json" ]]; then
+        config_arg="--config $PROJECT_DIR/.planning/config.json"
+        log "  Using $PROJECT_DIR/.planning/config.json for tier→model resolution."
+    elif [[ -f "$GSD_ECON_SRC/config/config.json.example" ]]; then
+        # Global mode (no project) — fall back to the example config so the
+        # default tier mapping (claude-haiku-4-5 / sonnet-4-6 / opus-4-7) is
+        # present. Users override per-project later by running install.sh
+        # --wire-only inside the project.
+        config_arg="--config $GSD_ECON_SRC/config/config.json.example"
+        log "  Global mode — using config.json.example for default tier→model resolution."
+        log "  Override per-project by editing .planning/config.json then running install.sh --wire-only."
+    else
+        warn "  No config.json found; agents will inherit the session model."
+        warn "  After creating/editing .planning/config.json, re-run with --wire-only."
+    fi
+
     run "mkdir -p '$dst_dir'"
     for f in "$src_dir"/*.md; do
         [[ -f "$f" ]] || continue
@@ -342,9 +365,10 @@ place_agents() {
         # If it's a symlink (left over from a prior claude install), remove it.
         [[ -L "$target" ]] && rm -f "$target"
         if [[ "$DRY_RUN" == 1 ]]; then
-            echo "[dry-run] python3 '$transform_script' '$f' '$target'"
+            echo "[dry-run] python3 '$transform_script' $config_arg '$f' '$target'"
         else
-            python3 "$transform_script" "$f" "$target" || \
+            # shellcheck disable=SC2086  # we want $config_arg word-split
+            python3 "$transform_script" $config_arg "$f" "$target" || \
                 err "Failed to transform agent $name for OpenCode"
             echo "  ✓ $name (frontmatter transformed for OpenCode)"
         fi
@@ -535,7 +559,14 @@ do_project_install() {
         log "Skipping RUT submodule (--skip-rut)."
     fi
 
-    # Step 4 — wire commands and agents
+    # Step 4 — wire config first so place_agents can read model_tiers
+    # (OpenCode subagents need an explicit `model:` from config.json's tier
+    # mapping; otherwise they inherit the session default and tiering is dead).
+    wire_config
+    copy_templates
+    copy_rules
+
+    # Step 5 — wire commands and agents
     local rt
     rt="$(resolve_runtimes "$(detect_runtimes_project "$PROJECT_DIR")")"
     for r in $rt; do
@@ -545,11 +576,6 @@ do_project_install() {
         log "Linking agents into $AGENT_DIR/"
         place_agents "$GSD_ECON_SRC/agents" "$AGENT_DIR" "$r"
     done
-
-    # Step 5 — wire config and copy templates
-    wire_config
-    copy_templates
-    copy_rules
 
     # Step 6 — final message
     cat <<EOF
@@ -643,6 +669,12 @@ do_wire_only() {
     if [[ -z "$rt" ]]; then
         err "No runtime detected (.opencode/ or .claude/). Initialize GSD first."
     fi
+
+    # Re-merge config first so place_agents can read updated model_tiers
+    # (idempotent via jq) and re-copy any new rule files.
+    GSD_ECON_SRC="$source_dir" wire_config
+    GSD_ECON_SRC="$source_dir" copy_rules
+
     for r in $rt; do
         resolve_dirs "$r" "project"
         log "Re-linking commands into $CMD_DIR/"
@@ -650,10 +682,6 @@ do_wire_only() {
         log "Re-linking agents into $AGENT_DIR/"
         place_agents "$source_dir/agents" "$AGENT_DIR" "$r"
     done
-
-    # Re-merge config (idempotent via jq) and re-copy any new rule files
-    GSD_ECON_SRC="$source_dir" wire_config
-    GSD_ECON_SRC="$source_dir" copy_rules
 
     cat <<EOF
 
