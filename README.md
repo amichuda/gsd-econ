@@ -208,7 +208,11 @@ gsd-econ/
 │   ├── polish-consistency.md      # cross-section consistency
 │   └── polish-claims.md           # real-world fact verification
 ├── skills/
-│   └── econ-research/SKILL.md     # aggregator skill for project-level injection
+│   ├── econ-research/SKILL.md     # aggregator skill for project-level injection
+│   └── openalex-search/           # programmatic search of OpenAlex (pyalex-based)
+│       ├── SKILL.md
+│       ├── openalex_search.py     # helper module: find_recent_nber, find_evaluation_candidates, ...
+│       └── requirements.txt
 ├── templates/                     # bootstrap doc templates
 │   ├── PROJECT.md.template
 │   ├── REQUIREMENTS.md.template
