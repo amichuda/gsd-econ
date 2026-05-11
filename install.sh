@@ -197,10 +197,6 @@ check_prereqs() {
         command -v npx >/dev/null 2>&1 || missing+=("npx")
     fi
 
-    if ! command -v jq >/dev/null 2>&1; then
-        warn "jq not found — config merging will be manual. Install jq for cleaner installs."
-    fi
-
     if [[ ${#missing[@]} -gt 0 ]]; then
         err "Missing required commands: ${missing[*]}
   Install them and retry. On macOS:  brew install ${missing[*]}
@@ -385,26 +381,23 @@ wire_config() {
     run "mkdir -p '$planning_dir'"
     log "Configuring $config_file"
     if [[ ! -f "$config_file" ]]; then
+        # Fresh install: copy the example to give the user a starting point.
         if [[ "$DRY_RUN" == 1 ]]; then
             echo "[dry-run] cp '$GSD_ECON_SRC/config/config.json.example' '$config_file'"
         else
             cp "$GSD_ECON_SRC/config/config.json.example" "$config_file"
             echo "  ✓ Created $config_file"
         fi
-    elif command -v jq >/dev/null 2>&1; then
-        if [[ "$DRY_RUN" == 1 ]]; then
-            echo "[dry-run] jq merge $config_file with example"
-        else
-            local tmp
-            tmp=$(mktemp)
-            jq -s '.[0] * .[1]' "$config_file" "$GSD_ECON_SRC/config/config.json.example" > "$tmp"
-            mv "$tmp" "$config_file"
-            echo "  ✓ Merged via jq"
-        fi
     else
-        warn "jq not found; cannot auto-merge config."
-        warn "Manually merge agent_skills, test_registries, model_tiers, workflow"
-        warn "from $GSD_ECON_SRC/config/config.json.example into $config_file"
+        # Config already exists. DO NOT overwrite user edits.
+        # Previously this auto-merged the example into the user's config,
+        # which clobbered model_tiers and other user-tuned fields. That was
+        # a real bug: 'install.sh --wire-only' should refresh the agent/
+        # command wiring without touching the user's config choices.
+        echo "  ✓ $config_file already exists — preserved (your edits win)."
+        echo "    If you want to pull in new fields from the upstream example,"
+        echo "    diff them manually:"
+        echo "      diff -u '$config_file' '$GSD_ECON_SRC/config/config.json.example'"
     fi
 }
 
@@ -670,8 +663,8 @@ do_wire_only() {
         err "No runtime detected (.opencode/ or .claude/). Initialize GSD first."
     fi
 
-    # Re-merge config first so place_agents can read updated model_tiers
-    # (idempotent via jq) and re-copy any new rule files.
+    # Wire config first so place_agents can read updated model_tiers
+    # (this preserves the user's config.json and never overwrites edits).
     GSD_ECON_SRC="$source_dir" wire_config
     GSD_ECON_SRC="$source_dir" copy_rules
 
