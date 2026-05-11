@@ -1,0 +1,39 @@
+[project]
+name = "gsd-econ"
+version = "0.1.0"
+description = "Spec-driven workflow framework for empirical economics research, built on get-shit-done and research-unit-tests."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Aleksandr Michuda", email = "amichud1@swarthmore.edu" },
+]
+keywords = ["economics", "causal-inference", "llm-agents", "claude-code", "opencode", "workflow"]
+# Runtime has no Python deps — the framework is markdown commands/agents/rules
+# consumed by an LLM runtime. Python is used only for the verification suite.
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/amichuda/gsd-econ"
+
+# Dev dependencies (verification suite). Use with:
+#   uv run --group dev pytest verification/
+# Or via the Makefile: make verify
+[dependency-groups]
+dev = [
+    "pytest>=7.0",
+    "pyyaml>=6.0",
+]
+
+# Optional: formal CITATION.cff schema validation. Install with:
+#   uv pip install cffconvert
+[project.optional-dependencies]
+cff = ["cffconvert>=2.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["verification"]
+python_files = ["test_*.py"]
+
+# uv-specific: this is a workspace root, no package to build.
+[tool.uv]
+package = false

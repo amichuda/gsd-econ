@@ -30,11 +30,37 @@ For these, we maintain a manual checklist that's run before each release. See [`
 make verify
 ```
 
-…or explicitly:
+This auto-detects whether you have [`uv`](https://docs.astral.sh/uv/) and uses it if available (faster, manages a project-local venv via `pyproject.toml`). Falls back to system `python3 -m pytest` otherwise.
+
+### With uv (recommended)
 
 ```bash
+# Install uv if you don't have it:
+curl -LsSf https://astral.sh/uv/install.sh | sh   # or: brew install uv
+
+# Then:
+make sync        # creates .venv and installs dev deps from pyproject.toml
+make verify
+```
+
+`uv sync --group dev` is idempotent and runs in milliseconds after the first time. `make verify` runs `uv run --group dev pytest verification/` under the hood, which auto-syncs if needed.
+
+### Without uv (system Python + pip)
+
+```bash
+make install-deps   # tries pip, --user, then --break-system-packages
+make verify
+```
+
+### Direct invocation
+
+```bash
+# With uv:
+uv run --group dev pytest verification/ -v
+
+# Without:
 pip install -r verification/requirements.txt
-pytest verification/ -v
+python3 -m pytest verification/ -v
 ```
 
 For a quicker feedback loop during development:
