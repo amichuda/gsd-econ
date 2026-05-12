@@ -49,8 +49,8 @@ keywords:
   - replication
 
 # Update these whenever you tag a release.
-version: 0.1.0
-date-released: "2026-05-07"
+version: 0.3.0
+date-released: "2026-05-12"
 
 # Acknowledgments to upstream projects this work builds on. These are not
 # co-authors — they're prior art / dependencies — so they go in `references`,

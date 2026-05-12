@@ -1,0 +1,148 @@
+# Multiverse grid for RCT designs
+#
+# Methodology choices that a competent referee might want to see varied
+# for an RCT. Compose with the project's decisions.jsonl to get the full
+# multiverse.
+#
+# Each axis is named, has a default value, an enumeration of legitimate
+# alternatives, and a citation pointing to where the methodological
+# discussion lives. The default is what the PAP would typically commit
+# to if the PAP isn't explicit on this dimension.
+#
+# Schema:
+#   axis_name:
+#     description: short prose
+#     default: <one of the alternatives>
+#     alternatives: [...]
+#     justification: when each alternative is preferable
+#     citations: [author-year, ...]
+#     pap_relevance: <high|medium|low>     # how often this is fixed by a PAP
+
+design: rct
+version: "0.3.0"
+
+axes:
+
+  se_clustering:
+    description: "Standard error structure for the primary specification."
+    default: "robust_individual"
+    alternatives:
+      - "robust_individual"             # Eicker-Huber-White, no clustering
+      - "cluster_at_treatment_unit"     # Cluster at the unit of randomization (e.g., classroom, village)
+      - "cluster_at_higher_geography"   # Cluster at a coarser level (e.g., school)
+      - "two_way_individual_x_time"     # For panel RCTs with repeated outcomes
+    justification: |
+      Cluster at the unit of randomization is the standard. Use robust_individual
+      only if randomization is genuinely at the individual level with no
+      spillovers. Coarser clustering is conservative if you suspect
+      treatment-induced correlation beyond the randomization unit.
+    citations: ["abadie-athey-imbens-wooldridge-2023"]
+    pap_relevance: high
+
+  stratum_fe:
+    description: "Whether and how to include stratum fixed effects from randomization."
+    default: "include_strata"
+    alternatives:
+      - "include_strata"                # FEs for the original strata used in randomization
+      - "no_strata"                     # Pool across strata
+      - "interact_with_treatment"       # Allow heterogeneous treatment effects by stratum
+    justification: |
+      Including strata is conservative and recovers the prespecified ATE.
+      Excluding strata is wrong when randomization was stratified. Including
+      treatment-by-stratum interactions answers a different question
+      (heterogeneity by stratum, not the pooled ATE).
+    citations: ["bruhn-mckenzie-2009", "athey-imbens-2017"]
+    pap_relevance: high
+
+  controls:
+    description: "Set of baseline covariates included in the regression."
+    default: "no_controls"
+    alternatives:
+      - "no_controls"                                    # Pure unadjusted ITT
+      - "prespecified_balance_controls"                  # Only those listed in PAP
+      - "lasso_selected_controls"                        # Post-double-LASSO selection
+      - "kitchen_sink_controls"                          # All baseline covariates (use cautiously)
+    justification: |
+      No-controls is the textbook ITT estimate and the most defensible default
+      for a well-randomized trial. PAP-prespecified controls only is the next
+      most defensible. LASSO is fine if pre-specified; ad-hoc selection is not.
+      Kitchen-sink is generally discouraged due to overfit risk in small samples.
+    citations: ["belloni-chernozhukov-hansen-2014", "lin-2013"]
+    pap_relevance: high
+
+  outcome_definition:
+    description: "When to measure the outcome and how to handle missing follow-up."
+    default: "pap_specified_window"
+    alternatives:
+      - "pap_specified_window"          # Exact window from PAP
+      - "narrower_window"               # Tighter conservative window
+      - "wider_window_for_late_responders"  # Include later responses
+      - "indicator_for_any_response"    # Binary: responded at all vs. attrited
+    justification: |
+      The PAP window is the headline. Narrower windows test robustness to slow
+      responders distorting the estimate; wider windows test whether the effect
+      persists. Binary recoding addresses attrition concerns.
+    citations: ["banerjee-duflo-glennerster-2017"]
+    pap_relevance: high
+
+  noncompliance_handling:
+    description: "How to handle subjects who didn't comply with their assigned treatment."
+    default: "itt"
+    alternatives:
+      - "itt"                           # Intent-to-treat, by assignment
+      - "tot_via_iv"                    # Treatment-on-treated via IV (Wald estimator)
+      - "per_protocol"                  # Drop non-compliers (USE WITH CAUTION)
+    justification: |
+      ITT is the headline. TOT (via IV with assignment as instrument) recovers
+      the LATE for compliers. Per-protocol breaks randomization and is generally
+      discouraged but sometimes reported in the medical literature.
+    citations: ["angrist-imbens-rubin-1996"]
+    pap_relevance: medium
+
+  multiple_testing:
+    description: "Correction for multiple primary outcomes or subgroup tests."
+    default: "no_correction"
+    alternatives:
+      - "no_correction"                 # Report raw p-values
+      - "bonferroni"                    # Conservative; loses power
+      - "westfall_young"                # Resampling-based, accounts for correlation
+      - "romano_wolf"                   # Stepdown, more powerful than Bonferroni
+      - "false_discovery_rate"          # BH; targets FDR not FWER
+    justification: |
+      No correction is reasonable for a single pre-specified primary outcome.
+      Multiple outcomes or subgroups require correction. Westfall-Young or
+      Romano-Wolf are the standard in development RCTs.
+    citations: ["romano-wolf-2005", "list-shaikh-xu-2019"]
+    pap_relevance: medium
+
+  attrition_handling:
+    description: "How to handle subjects who dropped out before outcome measurement."
+    default: "complete_case"
+    alternatives:
+      - "complete_case"                 # Analyze observed only
+      - "lee_bounds"                    # Manski-Horowitz/Lee trimming bounds
+      - "multiple_imputation"           # Impute under MAR
+      - "inverse_probability_weighting" # Weight by inverse attrition probability
+    justification: |
+      Complete case is defensible if attrition is balanced across arms and
+      modest in magnitude (<10-15%). Lee bounds bracket the true effect under
+      the worst-case selection. MI and IPW require modeling assumptions but
+      can be more efficient.
+    citations: ["lee-2009", "behaghel-crepon-gurgand-2015"]
+    pap_relevance: medium
+
+  heterogeneity_analysis:
+    description: "How to structure subgroup or heterogeneity analysis."
+    default: "prespecified_subgroups"
+    alternatives:
+      - "prespecified_subgroups"        # Only PAP-listed subgroups
+      - "causal_forest"                 # Athey-Wager causal forest for CATE
+      - "interaction_terms"             # Linear interactions with covariates
+      - "no_heterogeneity_analysis"     # Pool only
+    justification: |
+      Pre-specified subgroups are the most credible. Causal forests address
+      multiple-testing concerns via cross-fitting. Ad-hoc interaction-fishing
+      is the classic researcher-degree-of-freedom problem; avoid unless
+      pre-specified.
+    citations: ["wager-athey-2018", "athey-imbens-2016"]
+    pap_relevance: high

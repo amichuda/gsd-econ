@@ -23,6 +23,8 @@ SKIP_GSD=0
 SKIP_RUT=0
 DRY_RUN=0
 ASSUME_YES=0
+MODELS_CONFIG=""     # path to a models-config YAML (Option B)
+INTERACTIVE_MODELS=0 # if 1, run the interactive picker before applying
 
 usage() {
     cat <<'EOF'
@@ -49,6 +51,15 @@ Modes:
 Options:
   --runtime RUNTIME    Force runtime: opencode, claude, or both.
                        Default: auto-detect (use what's installed).
+  --models-config FILE Apply a models-config YAML (provider, tiers,
+                       session model, permissions). See
+                       config/model-configs/ for templates. Works in
+                       any mode; on --wire-only it re-applies without
+                       touching other config keys.
+  --interactive-models Run an interactive picker before installing.
+                       Walks you through provider and tier choices,
+                       writes the result to .planning/my-models.yaml,
+                       then applies it. Requires a TTY.
   --skip-gsd           Skip GSD core install (assume already installed).
   --skip-rut           Skip RUT submodule (assume already added).
   --dry-run            Print what would be done; don't execute.
@@ -60,6 +71,15 @@ Examples:
   # New project, all from scratch
   cd ~/papers/my-paper && git init
   bash /path/to/gsd-econ/install.sh
+
+  # New project, interactive model picker
+  bash /path/to/gsd-econ/install.sh --interactive-models
+
+  # New project, use a pre-made template
+  bash /path/to/gsd-econ/install.sh --models-config /path/to/gsd-econ/config/model-configs/openrouter-hybrid.yaml
+
+  # Change models later (preserves the rest of config.json)
+  bash /path/to/gsd-econ/install.sh --wire-only --models-config ~/my-new-models.yaml
 
   # User-wide install for use across many papers
   bash /path/to/gsd-econ/install.sh --global
@@ -96,6 +116,14 @@ while [[ $# -gt 0 ]]; do
         --runtime)
             RUNTIME="$2"
             shift 2
+            ;;
+        --models-config)
+            MODELS_CONFIG="$2"
+            shift 2
+            ;;
+        --interactive-models)
+            INTERACTIVE_MODELS=1
+            shift
             ;;
         --skip-gsd)
             SKIP_GSD=1
@@ -401,6 +429,67 @@ wire_config() {
     fi
 }
 
+# Apply a models-config YAML (if --models-config given) or run the interactive
+# picker first (if --interactive-models given). Updates .planning/config.json's
+# model_tiers and writes opencode.json. Idempotent — re-runs replace only the
+# model-related fields.
+apply_models_config() {
+    # Skip silently if neither flag was passed.
+    if [[ -z "$MODELS_CONFIG" && "$INTERACTIVE_MODELS" != 1 ]]; then
+        return 0
+    fi
+
+    if ! command -v python3 >/dev/null 2>&1; then
+        err "python3 is required for --models-config / --interactive-models."
+    fi
+
+    # Interactive picker: generate a YAML, then apply it below.
+    if [[ "$INTERACTIVE_MODELS" == 1 ]]; then
+        local picker="$GSD_ECON_SRC/scripts/pick-models-interactive.py"
+        if [[ ! -f "$picker" ]]; then
+            err "Interactive picker not found at $picker"
+        fi
+        local generated="$PROJECT_DIR/.planning/my-models.yaml"
+        if [[ "$DRY_RUN" == 1 ]]; then
+            echo "[dry-run] python3 '$picker' '$generated'"
+            MODELS_CONFIG="$generated"
+        else
+            log "Starting interactive model picker..."
+            run "mkdir -p '$PROJECT_DIR/.planning'"
+            if python3 "$picker" "$generated"; then
+                MODELS_CONFIG="$generated"
+                log "Interactive picker wrote $generated"
+            else
+                err "Interactive picker failed or was cancelled."
+            fi
+        fi
+    fi
+
+    # Apply the YAML.
+    if [[ -n "$MODELS_CONFIG" ]]; then
+        if [[ ! -f "$MODELS_CONFIG" ]]; then
+            err "Models config not found: $MODELS_CONFIG"
+        fi
+        local applier="$GSD_ECON_SRC/scripts/apply-models-config.py"
+        if [[ ! -f "$applier" ]]; then
+            err "apply-models-config.py not found at $applier"
+        fi
+        log "Applying models config: $MODELS_CONFIG"
+        if [[ "$DRY_RUN" == 1 ]]; then
+            echo "[dry-run] python3 '$applier' '$MODELS_CONFIG' '$PROJECT_DIR'"
+        else
+            # Try uv first (handles pyyaml dep automatically), fall back to plain python3
+            if command -v uv >/dev/null 2>&1 && [[ -f "$GSD_ECON_SRC/pyproject.toml" ]]; then
+                ( cd "$GSD_ECON_SRC" && uv run --group dev python3 "$applier" "$MODELS_CONFIG" "$PROJECT_DIR" ) \
+                    || err "Failed to apply models config."
+            else
+                python3 "$applier" "$MODELS_CONFIG" "$PROJECT_DIR" \
+                    || err "Failed to apply models config (is PyYAML installed? Try: pip3 install pyyaml --user)"
+            fi
+        fi
+    fi
+}
+
 copy_templates() {
     local planning_dir="$PROJECT_DIR/.planning"
     log "Copying templates into $planning_dir/ (only if absent)"
@@ -556,6 +645,7 @@ do_project_install() {
     # (OpenCode subagents need an explicit `model:` from config.json's tier
     # mapping; otherwise they inherit the session default and tiering is dead).
     wire_config
+    apply_models_config
     copy_templates
     copy_rules
 
@@ -666,6 +756,7 @@ do_wire_only() {
     # Wire config first so place_agents can read updated model_tiers
     # (this preserves the user's config.json and never overwrites edits).
     GSD_ECON_SRC="$source_dir" wire_config
+    GSD_ECON_SRC="$source_dir" apply_models_config
     GSD_ECON_SRC="$source_dir" copy_rules
 
     for r in $rt; do

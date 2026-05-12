@@ -1,0 +1,54 @@
+# gsd-econ model configuration: OpenRouter with DeepSeek V4
+#
+# All tiers route through OpenRouter to DeepSeek V4. Near-frontier quality
+# at roughly 10-20x lower cost than Claude Opus. Best for: cost-conscious
+# evaluation runs and high-volume agentic work.
+#
+# Cost estimate per full evaluation (Breza-paper-size project):
+#   ~$0.50-1.50 in API spend.
+#
+# Tradeoff: DeepSeek V4 trails Claude Opus 4.7 on a few benchmarks
+# (1-3 percentage points on SWE-bench, complex multi-step agentic tool use).
+# For econometric paper review specifically, the gap is unlikely to show
+# up — but if you find heavy-tier identification critiques shallow, switch
+# heavy to anthropic/claude-opus-4-7 (see openrouter-hybrid.yaml).
+#
+# Set up:
+#   1. Get an OpenRouter API key from https://openrouter.ai/keys
+#   2. export OPENROUTER_API_KEY=sk-or-v1-...
+#   3. ./install.sh --runtime opencode --models-config config/model-configs/openrouter-deepseek.yaml
+
+runtime: opencode
+
+provider:
+  name: openrouter
+  api_key_env: OPENROUTER_API_KEY
+  # Optional: shown in OpenRouter dashboard for usage attribution.
+  app_referer: "https://github.com/amichuda/gsd-econ"
+  app_title: "gsd-econ"
+
+tiers:
+  light:    openrouter/deepseek/deepseek-v4-flash
+  standard: openrouter/deepseek/deepseek-v4-flash
+  heavy:    openrouter/deepseek/deepseek-v4-pro
+
+session_default: openrouter/deepseek/deepseek-v4-flash
+
+permissions:
+  edit: ask
+  webfetch: allow
+  bash:
+    "git *": allow
+    "make *": allow
+    "uv *": allow
+    "ls *": allow
+    "cat *": allow
+    "rg *": allow
+    "grep *": allow
+    "find *": allow
+    "python3 *": allow
+    "Rscript *": allow
+    "stata -b *": allow
+    "rm -rf *": deny
+    "sudo *": deny
+    "*": ask

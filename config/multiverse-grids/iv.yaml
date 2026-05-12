@@ -1,0 +1,102 @@
+# Multiverse grid for Instrumental Variables designs
+#
+# Methodology choices that a competent referee might want to see varied
+# for an IV design. Compose with the project's decisions.jsonl to get the
+# full multiverse.
+
+design: iv
+version: "0.3.0"
+
+axes:
+
+  weak_iv_correction:
+    description: "Inference procedure given the strength of the first stage."
+    default: "anderson_rubin"
+    alternatives:
+      - "tsls_with_robust_se"           # Standard 2SLS; OK only if first-stage F > 100ish
+      - "anderson_rubin"                # AR test; valid for any first-stage strength
+      - "conditional_likelihood_ratio"  # CLR; near-optimal under heteroskedasticity
+      - "weak_iv_robust_t"              # Olea-Pflueger 2013 effective F
+    justification: |
+      Standard 2SLS inference is only valid when the first stage is strong
+      (Olea-Pflueger effective F > ~104 for 5% size). For weak or moderately
+      strong first stages, use AR or CLR confidence sets. The "rule of thumb"
+      F > 10 is outdated.
+    citations: ["andrews-stock-sun-2019", "olea-pflueger-2013", "lee-mccrary-moreira-porter-2022"]
+    pap_relevance: medium
+
+  controls:
+    description: "Control set in the structural equation."
+    default: "prespecified_controls"
+    alternatives:
+      - "no_controls"                   # Just the treatment + instrument(s)
+      - "prespecified_controls"         # PAP-listed
+      - "saturated_with_interactions"   # Add baseline-period interactions
+      - "post_double_lasso"             # Belloni-Chernozhukov-Hansen
+    justification: |
+      Pre-specified controls are the most defensible. Post-double-LASSO is
+      principled but requires that controls don't violate the exclusion
+      restriction conditional on the chosen set. Adding many ad-hoc controls
+      can weaken the instrument by absorbing relevant variation.
+    citations: ["belloni-chernozhukov-hansen-2014"]
+    pap_relevance: high
+
+  se_clustering:
+    description: "Cluster level for IV SEs."
+    default: "cluster_at_instrument_level"
+    alternatives:
+      - "robust_no_clustering"          # Only if instrument truly varies at individual level
+      - "cluster_at_instrument_level"   # Standard
+      - "two_way_clustering"            # If treatment and instrument vary at different levels
+      - "wild_cluster_bootstrap"        # For few clusters
+    justification: |
+      Cluster at the level of variation in the instrument. If instrument varies
+      at a coarser level than treatment, two-way clustering is appropriate.
+      Wild bootstrap for fewer than ~30 clusters.
+    citations: ["abadie-athey-imbens-wooldridge-2023", "cameron-gelbach-miller-2008"]
+    pap_relevance: high
+
+  exclusion_restriction_test:
+    description: "Validation or sensitivity analysis for the exclusion restriction."
+    default: "discussion_only"
+    alternatives:
+      - "discussion_only"               # Argue conceptually; no formal test
+      - "placebo_outcomes"              # Show no effect on outcomes unaffected by treatment
+      - "subsample_consistency"         # Effect should be similar across subsamples
+      - "conley_relaxed_exclusion"      # Plausibly exogenous IV with bounds
+    justification: |
+      The exclusion restriction is not testable. Strong defenses come from
+      placebo outcomes (no effect on things the treatment shouldn't affect)
+      and subsample consistency. Conley's plausibly-exogenous method bounds
+      the bias if exclusion holds approximately.
+    citations: ["conley-hansen-rossi-2012"]
+    pap_relevance: low
+
+  shift_share_inference:
+    description: "If using a shift-share/Bartik instrument, inference procedure."
+    default: "adao_kolesar_morales"
+    alternatives:
+      - "standard_clustered_se"         # Cluster at unit (WRONG for SSIVs)
+      - "adao_kolesar_morales"          # AKM-2019: cluster at the shock level
+      - "borusyak_hull_jaravel"         # BHJ-2022: exposure-design inference
+    justification: |
+      Standard clustered SEs are anti-conservative for shift-share IVs because
+      shocks are typically shared across units. AKM-2019 or BHJ-2022 are the
+      correct procedures depending on whether you think of inference as
+      shock-design or exposure-design.
+    citations: ["adao-kolesar-morales-2019", "borusyak-hull-jaravel-2022"]
+    pap_relevance: medium
+
+  late_interpretation:
+    description: "How to interpret the IV estimand for heterogeneous treatment effects."
+    default: "ate_under_homogeneity_assumption"
+    alternatives:
+      - "ate_under_homogeneity_assumption"   # Old-school interpretation
+      - "late_for_compliers"                 # AIR-1996 LATE; what compliers are
+      - "marginal_treatment_effects"         # Heckman-Vytlacil; full distribution
+    justification: |
+      The LATE interpretation is the modern default and should be the headline.
+      MTEs are a more ambitious extension when continuous variation in the
+      instrument is available.
+    citations: ["angrist-imbens-rubin-1996", "heckman-vytlacil-2005"]
+    pap_relevance: low

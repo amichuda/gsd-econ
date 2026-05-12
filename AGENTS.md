@@ -46,6 +46,7 @@ rule file. Use the Read tool; do not load all of these at session start.
 | `rules/data-handling.md` | When working with data files (raw, cleaned, derived) |
 | `rules/manuscript-discipline.md` | When editing the manuscript or generating manuscript text |
 | `rules/uncertainty-honesty.md` | Before any factual claim about a paper, dataset, method, or finding you haven't directly verified in this session — and any time you're tempted to overclaim, paper over a gap, or soften an inconvenient finding |
+| `rules/decision-logging.md` | During the execute phase, any time you make a contested judgment call about data cleaning, variable construction, or methodology. The log feeds `/gsd-multiverse`. |
 
 ## Project layout assumptions
 

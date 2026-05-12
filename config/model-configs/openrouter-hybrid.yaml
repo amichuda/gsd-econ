@@ -1,0 +1,53 @@
+# gsd-econ model configuration: OpenRouter hybrid (DeepSeek for cheap tiers, Claude for heavy)
+#
+# Routes high-volume tiers through DeepSeek V4 for cost, but uses Claude Opus 4.7
+# for the heavy tier where reasoning quality matters most (identification-checker,
+# econometrician, referee-deliberator). Best for: production paper work that
+# still wants meaningful cost savings on the parallel fan-out.
+#
+# Cost estimate per full evaluation (Breza-paper-size project):
+#   ~$5-15 in API spend.
+#
+# Rationale: the heavy tier fires ~5-15 times per paper (small) while the light
+# tier fires ~30-50 times (the parallel referee fan, polish-pass). Spending Claude
+# prices only on the small set contains cost without sacrificing quality where
+# it counts.
+#
+# Set up:
+#   1. Get an OpenRouter API key from https://openrouter.ai/keys
+#   2. export OPENROUTER_API_KEY=sk-or-v1-...
+#   3. ./install.sh --runtime opencode --models-config config/model-configs/openrouter-hybrid.yaml
+
+runtime: opencode
+
+provider:
+  name: openrouter
+  api_key_env: OPENROUTER_API_KEY
+  app_referer: "https://github.com/amichuda/gsd-econ"
+  app_title: "gsd-econ"
+
+tiers:
+  light:    openrouter/deepseek/deepseek-v4-flash
+  standard: openrouter/deepseek/deepseek-v4-flash
+  heavy:    openrouter/anthropic/claude-opus-4-7
+
+session_default: openrouter/deepseek/deepseek-v4-flash
+
+permissions:
+  edit: ask
+  webfetch: allow
+  bash:
+    "git *": allow
+    "make *": allow
+    "uv *": allow
+    "ls *": allow
+    "cat *": allow
+    "rg *": allow
+    "grep *": allow
+    "find *": allow
+    "python3 *": allow
+    "Rscript *": allow
+    "stata -b *": allow
+    "rm -rf *": deny
+    "sudo *": deny
+    "*": ask

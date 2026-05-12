@@ -57,6 +57,12 @@ Provide:
 
 Cite the 1–3 most relevant methodological references. Brief; the planner doesn't need a literature review, just the anchor.
 
+### Step 7 — Log contested decisions
+
+For every recommendation you make that involves a contested judgment call — clustering level, SE type, estimator choice, control set, FE structure, multiple-testing correction — append an entry to `decisions.jsonl` at the project root following the schema in `rules/decision-logging.md`. Each logged decision should include 1-3 defensible alternatives a competent referee might suggest. Mark `pap_committed: true` for decisions the PAP fixes; the multiverse runner uses this to know what to hold fixed vs. what to vary.
+
+Skip the log for forced choices (e.g., dropping rows with structurally impossible dates). The bar is "would a referee comment on this?" — if no, don't log; if yes, log with alternatives.
+
 ## Domain notes
 
 ### DiD estimators (post-2021 landscape)

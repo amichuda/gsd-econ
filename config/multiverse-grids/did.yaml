@@ -1,0 +1,118 @@
+# Multiverse grid for Difference-in-Differences designs
+#
+# Methodology choices that a competent referee might want to see varied
+# for a DiD design. Compose with the project's decisions.jsonl to get the
+# full multiverse.
+
+design: did
+version: "0.3.0"
+
+axes:
+
+  estimator:
+    description: "DiD estimator choice. The post-2021 staggered DiD literature has changed defaults substantially."
+    default: "callaway_santanna"
+    alternatives:
+      - "twfe"                          # Two-way fixed effects (OLS)
+      - "callaway_santanna"             # CS-2021, group-time ATTs
+      - "sun_abraham"                   # SA-2019, event-study with corrected weights
+      - "de_chaisemartin_dhaultfoeuille"  # dCDH, untreated-as-control DiD
+      - "borusyak_jaravel_spiess"       # BJS, imputation-based DiD
+      - "stacked_did"                   # Cengiz et al. 2019, stacked cohort design
+    justification: |
+      TWFE is unbiased only for simultaneous treatment with homogeneous effects.
+      For staggered treatment with heterogeneous effects, use CS, SA, dCDH, or
+      BJS. CS-2021 is the most cited choice. Stacked DiD is a practical
+      compromise that's easy to implement.
+    citations: ["callaway-santanna-2021", "sun-abraham-2019", "borusyak-jaravel-spiess-2024", "de-chaisemartin-dhaultfoeuille-2020", "cengiz-dube-lindner-zipperer-2019"]
+    pap_relevance: high
+
+  control_group:
+    description: "Definition of the control group for staggered estimators."
+    default: "never_treated"
+    alternatives:
+      - "never_treated"                 # Units never treated during sample
+      - "not_yet_treated"               # Units not yet treated at time t (more obs, but contaminated by anticipation if any)
+      - "last_treated"                  # CS-2021 alternative
+    justification: |
+      Never-treated is the cleanest comparison if a never-treated group exists.
+      Not-yet-treated uses more observations but is biased if there's
+      anticipation or if treatment effects are dynamic. The CS-2021 paper
+      discusses the tradeoff.
+    citations: ["callaway-santanna-2021"]
+    pap_relevance: medium
+
+  parallel_trends_window:
+    description: "How many pre-treatment periods to use for the parallel-trends test."
+    default: "all_pretreatment_periods"
+    alternatives:
+      - "all_pretreatment_periods"      # Full pre-period
+      - "two_periods_before"            # Limited pre-window
+      - "five_periods_before"           # Moderate pre-window
+      - "anchor_at_t_minus_one"         # Common normalization choice
+    justification: |
+      Longer pre-windows are stronger tests but may pick up unrelated long-run
+      trends. Shorter windows are weaker but more focused on the immediate
+      pre-treatment period. The "anchor at t-1" normalization is the convention
+      for event studies.
+    citations: ["roth-2022", "rambachan-roth-2023"]
+    pap_relevance: low
+
+  se_clustering:
+    description: "Standard error clustering for DiD."
+    default: "cluster_at_treatment_unit"
+    alternatives:
+      - "cluster_at_treatment_unit"     # Unit of treatment assignment (standard)
+      - "two_way_unit_x_time"           # Cameron-Gelbach-Miller
+      - "wild_cluster_bootstrap"        # Cameron-Gelbach-Miller 2008, for few clusters
+      - "conley_spatial"                # If treatment varies across space
+    justification: |
+      Cluster at the unit of treatment is the textbook default. Use wild
+      cluster bootstrap if you have <30-50 clusters (asymptotic CR1 SEs are
+      anti-conservative). Conley SEs for spatial designs.
+    citations: ["bertrand-duflo-mullainathan-2004", "cameron-gelbach-miller-2008", "mackinnon-webb-2017"]
+    pap_relevance: high
+
+  honest_did:
+    description: "Whether to use Rambachan-Roth honest DiD bounds in lieu of/alongside the point estimate."
+    default: "report_point_estimate_only"
+    alternatives:
+      - "report_point_estimate_only"
+      - "rambachan_roth_smoothness"     # Bounds under smoothness restrictions on pre-trends
+      - "rambachan_roth_relative_magnitudes"  # Bounds under relative-magnitudes restrictions
+    justification: |
+      Honest DiD provides confidence intervals robust to small violations of
+      parallel trends. Worth including in a robustness section even if not the
+      headline. Both restriction types are defensible; relative-magnitudes is
+      the more common choice.
+    citations: ["rambachan-roth-2023"]
+    pap_relevance: low
+
+  event_study_lags_leads:
+    description: "How many lags and leads to estimate in the event study figure."
+    default: "balanced_lags_and_leads"
+    alternatives:
+      - "balanced_lags_and_leads"       # Symmetric window
+      - "asymmetric_leaning_pre"        # More pre-periods than post
+      - "asymmetric_leaning_post"       # More post-periods than pre
+      - "bin_endpoints"                 # Group end periods to handle sparsity
+    justification: |
+      Balanced windows are the convention. Asymmetric choices may reflect data
+      availability. Binning endpoints handles the issue where the very early
+      pre or very late post periods have few observations.
+    citations: ["miller-2023"]
+    pap_relevance: low
+
+  controls_in_specification:
+    description: "Whether and which controls to include alongside the DiD design."
+    default: "no_time_varying_controls"
+    alternatives:
+      - "no_time_varying_controls"      # Pure DiD with FE
+      - "fixed_baseline_covariates"     # Time-invariant controls
+      - "time_varying_controls"         # Add time-varying covariates (CONTROVERSIAL)
+    justification: |
+      The cleanest DiD has only fixed effects. Time-varying controls can
+      introduce bad-control bias if they're affected by treatment. Use only
+      with strong defense (e.g., the control was determined pre-treatment).
+    citations: ["roth-santanna-bilinski-poe-2023"]
+    pap_relevance: medium

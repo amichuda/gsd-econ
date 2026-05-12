@@ -1,0 +1,51 @@
+# gsd-econ model configuration: Anthropic direct
+#
+# Routes all tiers through the Anthropic API. Highest quality, highest cost.
+# Best for: serious paper work where reasoning quality matters more than cost.
+#
+# Cost estimate per full evaluation (Breza-paper-size project):
+#   ~$30-60 in API spend.
+#
+# Set up:
+#   1. Get an API key from https://console.anthropic.com
+#   2. export ANTHROPIC_API_KEY=sk-ant-...
+#   3. ./install.sh --runtime opencode --models-config config/model-configs/anthropic-direct.yaml
+
+runtime: opencode
+
+provider:
+  name: anthropic
+  api_key_env: ANTHROPIC_API_KEY
+
+# Maps reasoning-load tiers (declared in agent frontmatter as
+# model_tier: light|standard|heavy) to specific model strings.
+# OpenCode requires provider-prefixed format.
+tiers:
+  light:    anthropic/claude-haiku-4-5
+  standard: anthropic/claude-sonnet-4-6
+  heavy:    anthropic/claude-opus-4-7
+
+# Default model for the primary session (the orchestrator that invokes
+# subagents). Heavy by default for the planning/discussion phases.
+session_default: anthropic/claude-opus-4-7
+
+# Permissions written into opencode.json. Conservative defaults: ask before
+# editing, allow common safe bash commands, deny destructive ones.
+permissions:
+  edit: ask
+  webfetch: allow
+  bash:
+    "git *": allow
+    "make *": allow
+    "uv *": allow
+    "ls *": allow
+    "cat *": allow
+    "rg *": allow
+    "grep *": allow
+    "find *": allow
+    "python3 *": allow
+    "Rscript *": allow
+    "stata -b *": allow
+    "rm -rf *": deny
+    "sudo *": deny
+    "*": ask

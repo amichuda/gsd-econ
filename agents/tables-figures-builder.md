@@ -185,6 +185,7 @@ esttab m1 m2 m3 using "tables/03_main.tex", ///
 - **No proprietary fonts.** Computer Modern, Latin Modern, Libertine, EB Garamond, etc. — anything in TeX Live.
 - **Caption is descriptive, not metaphorical.** "Effects of cash transfers on consumption (DiD estimates)" — yes. "The story of cash transfers" — no.
 - **Don't generate fake numbers.** If the source result file is missing or incomplete, surface and stop. The orchestrator will plan an upstream task.
+- **Log contested cleaning decisions you discover.** When building tables from analysis code, you may notice that the upstream pipeline made choices not present in the PAP — sample restrictions, outlier handling, missing-data rules, derived-variable definitions. Append each contested choice to `decisions.jsonl` following the schema in `rules/decision-logging.md`. The multiverse runner uses this log to test robustness. Don't log forced choices (data integrity, type conversions, documented missing codes); do log anything a referee might ask about.
 
 ## Failure modes
 

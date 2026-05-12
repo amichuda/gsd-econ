@@ -8,7 +8,28 @@
 
 - An LLM coding runtime: OpenCode, Claude Code, or another GSD-supported runtime (or installable via the script).
 - `git`, `bash`, `node` (for `npx`), `python3` (for path computation in the install script).
-- Optional but recommended: `jq` for clean config merging.
+- Optional but recommended: `uv` (for dev dependency management; the install will fall back to pip).
+
+---
+
+## Picking models (recommended first step)
+
+Before running install, decide how models map to the framework's three tiers (light/standard/heavy). Three options, easiest first:
+
+**Option 1: Pick interactively.**
+```bash
+bash /path/to/gsd-econ/install.sh --interactive-models
+```
+Walks you through provider and tier choices, writes the result to `.planning/my-models.yaml`, then applies it.
+
+**Option 2: Use a ready-made template.**
+```bash
+bash /path/to/gsd-econ/install.sh --models-config /path/to/gsd-econ/config/model-configs/openrouter-hybrid.yaml
+```
+See `config/model-configs/` for templates: Anthropic direct, OpenRouter (DeepSeek and hybrid), Ollama local. Each YAML documents its cost estimates and tradeoffs.
+
+**Option 3: Skip and configure later.**
+Just run the install without these flags. You'll get a default `.planning/config.json` with Anthropic models. Edit it directly later, then re-run with `--wire-only` to propagate.
 
 ---
 

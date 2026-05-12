@@ -1,6 +1,6 @@
 [project]
 name = "gsd-econ"
-version = "0.1.0"
+version = "0.3.0"
 description = "Spec-driven workflow framework for empirical economics research, built on get-shit-done and research-unit-tests."
 readme = "README.md"
 requires-python = ">=3.10"

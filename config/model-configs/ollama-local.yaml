@@ -1,0 +1,53 @@
+# gsd-econ model configuration: Local-only via Ollama
+#
+# Routes all tiers through a local Ollama server. Zero cloud API spend, full
+# data privacy, but requires substantial local hardware (32GB+ unified memory
+# for the standard/heavy tiers). Best for: sensitive unpublished research
+# data, offline work, or just running cheap.
+#
+# Tradeoff: local open-weights models trail frontier closed models by a real
+# margin on agentic tool use and long-context reasoning. Heavy-tier
+# identification-checking will be noticeably weaker. Use this for the polish
+# and audit phases, where the task is mechanical; consider a hybrid for the
+# discussion and planning phases.
+#
+# Set up:
+#   1. Install Ollama: https://ollama.com/download
+#   2. Pull the models you'll use:
+#        ollama pull qwen3.6:30b
+#        ollama pull deepseek-r1:32b
+#        ollama pull gemma3:27b
+#   3. (No API key needed.)
+#   4. ./install.sh --runtime opencode --models-config config/model-configs/ollama-local.yaml
+
+runtime: opencode
+
+provider:
+  name: ollama
+  base_url: "http://localhost:11434/v1"
+
+tiers:
+  light:    ollama/qwen3.6:30b
+  standard: ollama/qwen3.6:30b
+  heavy:    ollama/deepseek-r1:32b
+
+session_default: ollama/qwen3.6:30b
+
+permissions:
+  edit: ask
+  webfetch: allow
+  bash:
+    "git *": allow
+    "make *": allow
+    "uv *": allow
+    "ls *": allow
+    "cat *": allow
+    "rg *": allow
+    "grep *": allow
+    "find *": allow
+    "python3 *": allow
+    "Rscript *": allow
+    "stata -b *": allow
+    "rm -rf *": deny
+    "sudo *": deny
+    "*": ask

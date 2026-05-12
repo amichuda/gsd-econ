@@ -1,0 +1,123 @@
+# Multiverse grid for Regression Discontinuity Designs
+#
+# Methodology choices that a competent referee might want to see varied
+# for an RDD. Compose with the project's decisions.jsonl to get the full
+# multiverse.
+
+design: rdd
+version: "0.3.0"
+
+axes:
+
+  bandwidth_selection:
+    description: "How to choose the bandwidth around the cutoff."
+    default: "imbens_kalyanaraman_optimal"
+    alternatives:
+      - "imbens_kalyanaraman_optimal"   # IK 2012 plug-in MSE-optimal
+      - "calonico_cattaneo_titiunik"    # CCT 2014 robust bias-corrected
+      - "calonico_cattaneo_farrell"     # CCF MSE-optimal for fuzzy RD
+      - "halved_bandwidth"              # Sensitivity: half of optimal
+      - "doubled_bandwidth"             # Sensitivity: 2x optimal
+    justification: |
+      CCT-2014 is the modern default with robust bias-corrected inference. IK
+      is older but still common. Halved and doubled bandwidths are standard
+      sensitivity checks. CCF is the right choice for fuzzy designs.
+    citations: ["imbens-kalyanaraman-2012", "calonico-cattaneo-titiunik-2014", "calonico-cattaneo-farrell-2020"]
+    pap_relevance: medium
+
+  polynomial_order:
+    description: "Order of the polynomial used in the local regression."
+    default: "linear"
+    alternatives:
+      - "linear"                        # Default; recommended by Gelman-Imbens
+      - "quadratic"                     # Common in older literature
+      - "cubic"                         # Discouraged by Gelman-Imbens 2019
+    justification: |
+      Gelman-Imbens 2019 argues against high-order polynomials in RDD because
+      they over-weight points far from the cutoff. Linear is the modern
+      default; quadratic for sensitivity. Higher orders are essentially never
+      defensible.
+    citations: ["gelman-imbens-2019"]
+    pap_relevance: medium
+
+  kernel:
+    description: "Kernel function for the local regression weighting."
+    default: "triangular"
+    alternatives:
+      - "triangular"                    # Default in rdrobust
+      - "uniform"                       # No down-weighting (essentially OLS in bandwidth)
+      - "epanechnikov"
+    justification: |
+      Triangular is the convention and the default in rdrobust. Uniform is
+      simpler but throws away the local-to-cutoff advantage. Epanechnikov is
+      a smoother choice but rarely changes results meaningfully.
+    citations: ["cattaneo-idrobo-titiunik-2019"]
+    pap_relevance: low
+
+  manipulation_test:
+    description: "Test for manipulation of the running variable around the cutoff."
+    default: "cattaneo_jansson_ma"
+    alternatives:
+      - "mccrary_density_test"          # Original; less power
+      - "cattaneo_jansson_ma"           # CJM-2020; recommended replacement
+      - "binning_test"                  # Visual + Pearson chi-square
+    justification: |
+      CJM-2020 is the modern recommendation, replacing the McCrary test which
+      has known issues with bandwidth selection and inference. Run both for
+      robustness in any case.
+    citations: ["mccrary-2008", "cattaneo-jansson-ma-2020"]
+    pap_relevance: low
+
+  se_clustering:
+    description: "Standard error structure."
+    default: "robust_bias_corrected"
+    alternatives:
+      - "robust_bias_corrected"         # CCT-2014 robust SEs (recommended)
+      - "cluster_at_running_var_level"  # If running variable has natural clusters
+      - "nearest_neighbor"              # Calonico et al. alternative
+    justification: |
+      CCT robust bias-corrected SEs are the modern default. Cluster at the
+      level of the running variable only if there's substantive reason
+      (e.g., scores are aggregated to a unit level).
+    citations: ["calonico-cattaneo-titiunik-2014"]
+    pap_relevance: medium
+
+  sharp_vs_fuzzy:
+    description: "Whether the RDD is sharp (treatment = 1 above cutoff) or fuzzy (probability of treatment jumps but isn't 1)."
+    default: "sharp_or_fuzzy_as_data"   # Determined by data; not really a multiverse axis
+    alternatives:
+      - "sharp_or_fuzzy_as_data"
+    justification: |
+      This is determined by the data, not a researcher choice. Listed here for
+      schema completeness but typically not varied.
+    citations: []
+    pap_relevance: high
+
+  mass_point_handling:
+    description: "When the running variable is discrete with limited unique values."
+    default: "kolesar_rothe_honest_inference"
+    alternatives:
+      - "ignore_discreteness"           # Treat as continuous (often inappropriate)
+      - "kolesar_rothe_honest_inference"  # KR-2018 honest CIs for discrete RV
+      - "treat_each_mass_point_separately"
+    justification: |
+      When the running variable has few unique values (test scores, age in
+      years), KR-2018 honest CIs are the appropriate inference. Ignoring
+      discreteness understates uncertainty.
+    citations: ["kolesar-rothe-2018"]
+    pap_relevance: low
+
+  donut_radius:
+    description: "Whether to exclude observations very close to the cutoff (a 'donut' design)."
+    default: "no_donut"
+    alternatives:
+      - "no_donut"                      # Include all observations
+      - "small_donut"                   # Drop +/- 1 unit
+      - "moderate_donut"                # Drop +/- 5 units (or similar)
+    justification: |
+      Donut designs are used when there's concern about manipulation or
+      mismeasurement near the cutoff. Default is no donut. Sensitivity to
+      donut radius tests whether the result is driven by near-cutoff
+      observations.
+    citations: ["barreca-guldi-lindo-waddell-2011"]
+    pap_relevance: low

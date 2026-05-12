@@ -156,15 +156,18 @@ def test_readme_file_tree_files_exist(repo_root: Path) -> None:
         # crude: lines that contain a filename with an extension
         # Match longer extensions first (e.g., .json.example, .md.template)
         m = re.search(
-            r"([\w.-]+\.(md\.template|json\.example|md|sh|json|yaml|yml|tex))",
+            r"([\w.-]+\.(md\.template|json\.example|md|sh|jsonl|json|yaml|yml|tex|csv))",
             line,
         )
         if m:
             referenced_files.add(m.group(1))
 
-    # Some references are upstream files we don't ship — exclude
+    # Some references are upstream files we don't ship, or files generated
+    # at project-runtime inside user projects (not in the framework repo).
     upstream_only = {
         "README.md",  # ambiguous; we have one but tree references upstream too
+        "decisions.jsonl",  # generated per-project by execute-phase agents
+        "multiverse_results.csv",  # generated per-project by /gsd-multiverse
     }
     referenced_files -= upstream_only
 

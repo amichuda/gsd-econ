@@ -22,6 +22,7 @@ You get:
 - **RUT-driven verification** — declared methodology tags (DiD, IV, RDD, field experiment, etc.) drive which tests gate each phase.
 - **Bootstrap templates** for `PROJECT.md`, `REQUIREMENTS.md`, `METHODOLOGY.md`, and the per-phase `CONTEXT.md` files, oriented around research questions rather than user stories.
 - **Custom tests** for econometric concerns the upstream RUT registry doesn't cover yet (Conley SEs, attrition balance, exclusion restriction prose, PAP-deviation disclosure).
+- **Automated robustness via `/gsd-multiverse`** (v0.3+) — execute-phase agents log contested data-cleaning and methodology decisions to `decisions.jsonl` as they make them; `/gsd-multiverse` reads the log, composes with a design-family methodology grid (DiD/IV/RDD/RCT), and runs every defensible specification. Outputs both a publication-quality specification-curve PDF and a self-contained interactive HTML report. See [`docs/multiverse.md`](docs/multiverse.md).
 
 This is **not** a fork of GSD. It runs as an overlay: install GSD with `--minimal`, then drop these files into your project. Updates to GSD propagate cleanly.
 
@@ -80,9 +81,10 @@ After install, in your runtime:
 /gsd-new-paper           # auto-detects new vs mid-project
 /gsd-new-paper --new     # force greenfield mode
 /gsd-new-paper --adopt   # force brownfield mode (existing manuscript)
+/gsd-multiverse          # automated robustness once execute phase is done
 ```
 
-`/gsd-new-paper` is the single entry point. It auto-detects whether you're starting fresh or adopting an in-progress paper. For brownfield adoption details, see [`docs/adopting-mid-project.md`](docs/adopting-mid-project.md).
+`/gsd-new-paper` is the single entry point. It auto-detects whether you're starting fresh or adopting an in-progress paper. For brownfield adoption details, see [`docs/adopting-mid-project.md`](docs/adopting-mid-project.md). For the multiverse workflow, see [`docs/multiverse.md`](docs/multiverse.md) (concept) and [`docs/multiverse-tutorial.md`](docs/multiverse-tutorial.md) (worked walkthrough).
 
 Detailed install: see [`INSTALL.md`](INSTALL.md).
 
@@ -132,6 +134,12 @@ Detailed install: see [`INSTALL.md`](INSTALL.md).
                         consistency, claims; up to 2 rounds)
                               │
                               ▼
+                       /gsd-multiverse
+                       (specification-curve robustness:
+                        run every defensible spec from
+                        decisions.jsonl × methodology grid)
+                              │
+                              ▼
                        /gsd-submit-paper
                        (final referee-sim run)
 ```
@@ -142,7 +150,7 @@ Phases for a typical empirical paper:
 2. **Stylized facts / descriptives**
 3. **Identification diagnostics** (parallel trends, first-stage, manipulation tests)
 4. **Main specification**
-5. **Robustness + heterogeneity**
+5. **Robustness + heterogeneity** — manual robustness *plus* automated multiverse via `/gsd-multiverse`
 6. **Monte Carlo / power** (if applicable)
 7. **Tables + figures pipeline**
 8. **Manuscript writing** (intro/data/results/discussion)
@@ -192,11 +200,13 @@ gsd-econ/
 │   ├── gsd-polish-pass.md         # final pre-submission audit fan-out
 │   ├── gsd-submit-paper.md
 │   ├── gsd-test-paper.md          # run RUT tests for current methodology
-│   └── gsd-referee-sim.md
+│   ├── gsd-referee-sim.md
+│   └── gsd-multiverse.md          # specification-curve / multiverse analysis (v0.3+)
 ├── agents/                        # specialized subagents (each declares model_tier)
 │   ├── econ-researcher.md
 │   ├── identification-checker.md
 │   ├── econometrician.md
+│   ├── multiverse-reporter.md     # specification curve PDF + interactive HTML report (v0.3+)
 │   ├── replication-verifier.md
 │   ├── tables-figures-builder.md
 │   ├── referee-sim.md             # default-mode referee (heavy tier)
@@ -270,13 +280,19 @@ gsd-econ/
 
 ## Status
 
-Pre-1.0. Built as a working scaffold; expect to fork and customize. Not affiliated with the upstream GSD or RUT projects.
+v0.3.0 (pre-1.0). Built as a working scaffold; expect to fork and customize. Not affiliated with the upstream GSD or RUT projects. See [`CHANGELOG.md`](CHANGELOG.md) for version history. The current release adds automated specification-curve analysis via `/gsd-multiverse` — see [`docs/multiverse.md`](docs/multiverse.md).
+
+**Validation status, honestly.** The framework passes its own structural verification suite (247 tests across rule presence, command/agent schema, install end-to-end, models-config pipeline, multiverse runner correctness, and config preservation regression). It has **not** yet been run end-to-end on a real paper. The first planned evaluation is [Breza et al. (2026), NBER WP 34819](https://www.nber.org/papers/w34819) — a 4-arm factorial RCT (N=340) on mental health care take-up in Chennai — across three modes (greenfield design, post-hoc audit, multiverse robustness). See [`GETTING-STARTED.md`](GETTING-STARTED.md) for the protocol. Results will go in `evaluations/breza-2026/` when the run is complete. Until then, treat v0.3 features as designed-but-unvalidated.
 
 ---
 
 ## License
 
 MIT. See [`LICENSE`](LICENSE). Upstream GSD and RUT are also MIT-licensed; their copyrights remain with their respective authors.
+
+## Related work
+
+gsd-econ is one of several projects in the economics-AI-agent space. Closest neighbors include [Bäckman's `AI-research-feedback`](https://github.com/claesbackman/AI-research-feedback) (multi-agent paper review), [Crawfurd's `claude-skills`](https://github.com/lcrawfurd/claude-skills) (review-framework wrappers), and the design proposals in [Korinek (2025, NBER 34202)](https://www.nber.org/papers/w34202) and [Dawid, Harting et al. (2025, arXiv 2504.09736)](https://arxiv.org/abs/2504.09736). [Shin (2026, arXiv 2603.17381)](https://arxiv.org/abs/2603.17381) and [Karpathy's autoresearch](https://github.com/karpathy/autoresearch) are the relevant references for the audit-locked specification-search direction. See [`docs/related-work.md`](docs/related-work.md) for full attribution and a comparison of what each project does well.
 
 ## Citation and attribution
 
