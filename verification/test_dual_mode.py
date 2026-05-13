@@ -64,6 +64,23 @@ def test_adopt_mode_documents_read_only_constraint(repo_root: Path) -> None:
     )
 
 
+def test_adopt_mode_populates_literature_scout(repo_root: Path) -> None:
+    """Adoption must create the project-level scout later commands assume exists."""
+    body = (repo_root / "commands" / "gsd-new-paper.md").read_text(encoding="utf-8")
+    adopt_start = body.index("## Process — `--adopt` mode")
+    adopt_body = body[adopt_start:]
+
+    assert "Spawn `econ-researcher`" in adopt_body, (
+        "gsd-new-paper.md --adopt mode must spawn econ-researcher before handoff"
+    )
+    assert ".planning/research/literature-scout.md" in adopt_body, (
+        "gsd-new-paper.md --adopt mode must populate the project-level literature scout"
+    )
+    assert "stub" in adopt_body.lower(), (
+        "gsd-new-paper.md --adopt mode must document the deferred-scout stub fallback"
+    )
+
+
 def test_adopting_doc_exists_and_links_back(repo_root: Path) -> None:
     """The brownfield doc must exist and the README must reference it."""
     doc = repo_root / "docs" / "adopting-mid-project.md"

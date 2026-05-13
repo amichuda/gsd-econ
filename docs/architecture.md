@@ -50,7 +50,7 @@ Each layer has a clean responsibility:
 The single bootstrap command supports two modes:
 
 - `/gsd-new-paper --new` (greenfield) — runs the framing interview and literature scout below
-- `/gsd-new-paper --adopt` (brownfield) — reads an existing manuscript and codebase to infer the methodology declaration; see [`adopting-mid-project.md`](adopting-mid-project.md) for the retrofit flow
+- `/gsd-new-paper --adopt` (brownfield) — reads an existing manuscript and codebase to infer the methodology declaration, then runs the same project-level literature scout before handoff; see [`adopting-mid-project.md`](adopting-mid-project.md) for the retrofit flow
 - `/gsd-new-paper` (auto) — auto-detects mode based on project state
 
 For greenfield bootstrap:
@@ -73,9 +73,11 @@ gsd-econ /gsd-new-paper command
    │       ROADMAP.md      ← phased empirical pipeline
    │
    └──► writes test contract:
-           METHODOLOGY.md declares e.g. methodology: did, scope: paper
-           → all DiD-tagged blockers in RUT registry become required gates
+            METHODOLOGY.md declares e.g. methodology: did, scope: paper
+            → all DiD-tagged blockers in RUT registry become required gates
 ```
+
+For brownfield adoption, the same `.planning/research/literature-scout.md` artifact is required before handoff. If the user defers the scout, `/gsd-new-paper --adopt` writes an explicit deferred-scout stub instead of leaving the file absent. Downstream commands can then distinguish "literature context incomplete" from "bootstrap forgot to run."
 
 ### Per phase (`/gsd-discuss-identification` → `/gsd-plan-empirics` → `/gsd-execute-phase` → `/gsd-verify-replication`)
 

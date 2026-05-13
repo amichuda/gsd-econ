@@ -103,7 +103,21 @@ From the manuscript's identification section and codebase signals, infer:
 
 Show the inferred declaration to the user as a draft `METHODOLOGY.md`. They edit, you save.
 
-### Step 3 — Reconstruct REQUIREMENTS.md from the existing paper
+### Step 3 — Literature scout
+
+Spawn `econ-researcher` before reconstructing requirements. Inputs:
+- Manuscript abstract and introduction, if present
+- Inferred research question and contribution from Step 2
+- Inferred methodology declaration from Step 2
+- Existing bibliography/citations from the manuscript, if visible
+
+Output: `.planning/research/literature-scout.md` with 5–15 published papers, 3–5 working papers, synthesis paragraph, and notes on whether the existing manuscript's contribution claim still looks distinct.
+
+Wait for completion. Summarize findings to the user. Ask: does the contribution statement or inferred methodology need refining given this landscape?
+
+If the user explicitly chooses to defer the scout, write a stub `.planning/research/literature-scout.md` that states the scout was deferred, records why, and warns that downstream commands will have weaker literature context. Do not silently proceed with the file missing.
+
+### Step 4 — Reconstruct REQUIREMENTS.md from the existing paper
 
 This is the trickiest part. Walk through the manuscript with the user, asking:
 
@@ -120,7 +134,7 @@ Populate REQUIREMENTS.md with:
 
 **Be honest about LOCKED.** If the user wants to flag something as OPEN that's already in the manuscript, that's a decision to revisit — surface this as a meaningful choice with downstream implications (might require a re-estimation phase, might require disclosure if pre-registered).
 
-### Step 4 — Backfill ROADMAP.md
+### Step 5 — Backfill ROADMAP.md
 
 Don't backfill completed phases in detail. Use this minimal pattern:
 
@@ -146,7 +160,7 @@ Ask the user where they actually are. Common answers:
 - "Replication archive" → jump straight to phase 9
 - "Just got referee reports" → don't use new-paper; redirect to `/gsd-rr-response`
 
-### Step 5 — Initialize STATE.md with adoption record
+### Step 6 — Initialize STATE.md with adoption record
 
 Append an explicit adoption marker:
 
@@ -158,12 +172,12 @@ Project state at adoption:
 - Current phase: <N+1> — <name>
 - Inferred methodology: <primary>, secondary <list>
 - Pre-registration: <none | URL>
-- Notable: <any LOCKED-from-OPEN flags the user surfaced in Step 3>
+- Notable: <any LOCKED-from-OPEN flags the user surfaced in Step 4>
 ```
 
 This is the audit trail for what existed when adoption happened. Critical for honesty later: a referee asking "when did you commit to specification X?" can be answered with "before adoption, see commit history" without false claims.
 
-### Step 6 — Baseline test report
+### Step 7 — Baseline test report
 
 Run `/gsd-test-paper --severity blocker --severity warning` against the existing manuscript and codebase. This produces `.planning/test-runs/<ISO>-test-paper.md` showing:
 
@@ -179,9 +193,9 @@ For each failure, present three options:
 - **Acknowledge**: log to STATE.md as known, won't fix this round (e.g., the framework wants Conley SEs; the paper has cluster SEs and the user judges that's fine)
 - **Exclude**: add to `METHODOLOGY.test_exclusions` with a written justification
 
-### Step 7 — Hand-off
+### Step 8 — Hand-off
 
-Based on Step 4's answer about current phase, point the user at the right next command:
+Based on Step 5's answer about current phase, point the user at the right next command:
 
 - Robustness or new analysis → `/gsd-discuss-identification <N>`
 - Drafting → continue manually; recommend `/gsd-test-paper` periodically
@@ -205,6 +219,7 @@ Commit. Final message: "gsd-econ adoption complete. Existing work preserved; fra
 - **Do not retrospectively run fix plans for pre-adoption work.** The point of adoption is to engage the workflow going forward, not to relitigate completed phases. The user can choose to address gaps; you don't auto-loop.
 - **Do not claim phases are COMPLETED that the user hasn't confirmed.** ROADMAP backfill is provisional until the user signs off.
 - **Do not silently overwrite if `.planning/` already exists.** If a previous gsd-econ install left planning docs, ask before merging or replacing.
+- **Do not silently skip the literature scout.** If the user defers it, write an explicit deferred-scout stub at `.planning/research/literature-scout.md`.
 - **Do not infer pre-registration from absence of evidence.** If you can't find a PAP reference, ask.
 - **Be honest about retrofit costs.** If the existing manuscript uses naive TWFE for staggered DiD, surface this clearly. Do not soft-pedal it because the work is already done.
 
@@ -218,6 +233,7 @@ Commit. Final message: "gsd-econ adoption complete. Existing work preserved; fra
 ## Output (`--adopt` mode)
 
 - `.planning/PROJECT.md`, `REQUIREMENTS.md`, `METHODOLOGY.md`, `ROADMAP.md` populated from inferred state
+- `.planning/research/literature-scout.md` populated by `econ-researcher` or an explicit deferred-scout stub
 - `.planning/STATE.md` with explicit adoption marker
 - `.planning/test-runs/<ISO>-test-paper.md` baseline report
 - Triage of any blockers surfaced (addressed / acknowledged / excluded)

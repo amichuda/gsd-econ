@@ -18,16 +18,17 @@ You don't need a fresh project. The single entry point `/gsd-new-paper` supports
 
 ## What `--adopt` does
 
-When you run `/gsd-new-paper --adopt` (or let auto-detect choose it), the command runs read-only over your existing project and:
+When you run `/gsd-new-paper --adopt` (or let auto-detect choose it), the command runs read-only over your existing manuscript and codebase and writes only planning artifacts under `.planning/`:
 
 1. **Inventories** the manuscript and codebase. Looks at what packages you use, what tables exist, what regression specifications appear in your code.
 2. **Infers** a methodology declaration — primary identification strategy, cluster level, SE method, sample restrictions — from your code and prose. Shows the inferred declaration to you for editing.
-3. **Reconstructs `REQUIREMENTS.md`** by walking through the manuscript with you. Hypotheses already published become LOCKED; anything you're still revisiting stays OPEN.
-4. **Backfills `ROADMAP.md`** with a minimal "[COMPLETED PRE-ADOPTION]" tag for each finished phase. Doesn't pretend to reconstruct phases that already happened — just records that they did.
-5. **Writes an adoption marker to `STATE.md`** with a timestamp. This is the audit trail. If a referee later asks "when did you commit to specification X?", you can answer "before adoption, see commit history" without false claims.
-6. **Runs `/gsd-test-paper --severity blocker --severity warning`** to produce a baseline report. Surfaces what passes (encouraging — you've done good work) and what fails (the retrofit gaps).
-7. **Asks you to triage each failure** as: address (real defect), acknowledge (won't fix this round, log to STATE.md), or exclude (add to `METHODOLOGY.test_exclusions` with justification).
-8. **Hands off** to the right next command for your current phase.
+3. **Runs the project-level literature scout** by spawning `econ-researcher` with the manuscript's abstract/introduction, inferred contribution, inferred methodology, and existing bibliography. This writes `.planning/research/literature-scout.md`, the same artifact greenfield projects get before identification discussion.
+4. **Reconstructs `REQUIREMENTS.md`** by walking through the manuscript with you. Hypotheses already published become LOCKED; anything you're still revisiting stays OPEN.
+5. **Backfills `ROADMAP.md`** with a minimal "[COMPLETED PRE-ADOPTION]" tag for each finished phase. Doesn't pretend to reconstruct phases that already happened — just records that they did.
+6. **Writes an adoption marker to `STATE.md`** with a timestamp. This is the audit trail. If a referee later asks "when did you commit to specification X?", you can answer "before adoption, see commit history" without false claims.
+7. **Runs `/gsd-test-paper --severity blocker --severity warning`** to produce a baseline report. Surfaces what passes (encouraging — you've done good work) and what fails (the retrofit gaps).
+8. **Asks you to triage each failure** as: address (real defect), acknowledge (won't fix this round, log to STATE.md), or exclude (add to `METHODOLOGY.test_exclusions` with justification).
+9. **Hands off** to the right next command for your current phase.
 
 ## What `--adopt` does not do
 
@@ -35,6 +36,7 @@ When you run `/gsd-new-paper --adopt` (or let auto-detect choose it), the comman
 - **Does not retroactively run fix plans for completed work.** Your call which gaps to address.
 - **Does not relitigate identification choices.** If your DiD paper used naive TWFE for staggered treatment, the framework will flag it (because it should), but won't auto-rewrite.
 - **Does not silently overwrite existing planning docs.** If you've used a prior version of gsd-econ, it asks before merging.
+- **Does not silently skip the literature scout.** If you defer it, adoption writes an explicit stub at `.planning/research/literature-scout.md` so downstream commands know the context is incomplete.
 
 ## A typical adoption session
 
